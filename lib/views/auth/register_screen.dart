@@ -267,25 +267,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Translucent Card
+                    // Translucent Card (Chubby & Cute)
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.88),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                        color: Colors.white.withOpacity(0.90),
+                        borderRadius: BorderRadius.circular(38),
+                        border: Border.all(color: Colors.white.withOpacity(0.85), width: 2.2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6C63FF).withOpacity(0.04),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          )
+                            color: const Color(0xFF6C63FF).withOpacity(0.06),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 10),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.01),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Name Input
+                          // Name Input (Chubby)
                           TextFormField(
                             controller: _nameController,
                             decoration: InputDecoration(
@@ -293,13 +299,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF6C63FF), size: 20),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -310,7 +321,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Email Input
+                          // Email Input (Chubby)
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -319,13 +330,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF6C63FF), size: 20),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -339,7 +355,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Password Input
+                          // Password Input (Chubby)
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscureText,
@@ -348,13 +364,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -368,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Confirm Password Input
+                          // Confirm Password Input (Chubby)
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureText,
@@ -377,13 +398,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -394,17 +420,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Submit Button
+                          // Submit Button (Chubby)
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
+                            height: 54,
                             child: ElevatedButton(
                               onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading ? null : _submit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF6C63FF),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(22),
                                 ),
                                 elevation: 0,
                               ),
@@ -421,7 +447,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 20),
                           
                           // Custom Divider
                           Row(
@@ -435,22 +461,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ],
                           ),
                           
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
-                          // Social Media buttons
+                          // Social Media buttons (Chubby)
                           Row(
                             children: [
                               // Google
                               Expanded(
                                 child: SizedBox(
-                                  height: 48,
+                                  height: 50,
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
                                         : () => _socialSignUp('Google', 'user@riseup.com'),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: (_isSocialLoading && _socialPlatform == 'Google')
@@ -460,18 +486,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                             child: CircularProgressIndicator(strokeWidth: 2),
                                           )
                                         : Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Image.asset(
-                                                'assets/images/google.png',
-                                                height: 20,
-                                                width: 20,
-                                                fit: BoxFit.contain,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Text('Google', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
-                                            ],
-                                          ),
+                                             mainAxisAlignment: MainAxisAlignment.center,
+                                             children: [
+                                               Image.asset(
+                                                 'assets/images/google.png',
+                                                 height: 20,
+                                                 width: 20,
+                                                 fit: BoxFit.contain,
+                                               ),
+                                               const SizedBox(width: 8),
+                                               const Text('Google', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
+                                             ],
+                                           ),
                                   ),
                                 ),
                               ),
@@ -479,14 +505,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               // Nomor Telepon (SMS OTP Demo)
                               Expanded(
                                 child: SizedBox(
-                                  height: 48,
+                                  height: 50,
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
                                         : _showPhoneSignUpDialog,
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: Row(

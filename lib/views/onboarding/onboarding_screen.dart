@@ -138,8 +138,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Placeholder spacer untuk area doodle visual di atas
-                                const SizedBox(height: 180),
+                                // Ilustrasi Slide Kustom yang Terpusat & Tidak Tumpang Tindih
+                                SizedBox(
+                                  height: 180,
+                                  width: 180,
+                                  child: CustomPaint(
+                                    painter: SlideIllustrationPainter(
+                                      pageIndex: index,
+                                      animationValue: _animationController.value,
+                                      themeColor: slide.themeColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
                                 Text(
                                   slide.title,
                                   textAlign: TextAlign.center,
@@ -286,7 +297,9 @@ class OnboardingDoodlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     // 1. Gambar Gradasi Latar Belakang
     final rect = Rect.fromLTWH(0, 0, size.width, size.height);
@@ -299,60 +312,264 @@ class OnboardingDoodlePainter extends CustomPainter {
     canvas.drawRect(rect, paint);
     paint.shader = null; // Reset shader
 
-    // 2. Gambar Doodle Berdasarkan Slide Aktif
-    final center = Offset(size.width / 2, size.height * 0.30);
+    final loopVal = animationValue * 2 * math.pi;
+
+    // 2. Gambar ombak pastel yang bergerak mengayun lembut di bagian bawah
+    final waveHeightOffset1 = math.sin(loopVal) * 10.0;
+    final waveHeightOffset2 = math.cos(loopVal) * 8.0;
+    final wavePath = Path()
+      ..moveTo(0, size.height * 0.93 + waveHeightOffset1 * 0.4)
+      ..quadraticBezierTo(
+          size.width * 0.25, 
+          size.height * 0.90 + waveHeightOffset1, 
+          size.width * 0.5, 
+          size.height * 0.94 + waveHeightOffset2
+      )
+      ..quadraticBezierTo(
+          size.width * 0.75, 
+          size.height * 0.98 + waveHeightOffset1, 
+          size.width, 
+          size.height * 0.92 + waveHeightOffset2 * 0.4
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    paint.color = themeColor.withOpacity(0.12);
+    canvas.drawPath(wavePath, paint);
+
+    // 3. Gambar awan-awan tersenyum melayang lambat
+    final cloud1Offset = Offset(
+      size.width * 0.8 + math.sin(loopVal * 0.8) * 12.0,
+      size.height * 0.15 + math.cos(loopVal * 0.6) * 6.0,
+    );
+    _drawSmilingCloud(canvas, cloud1Offset, 30);
+
+    final cloud2Offset = Offset(
+      size.width * 0.15 + math.cos(loopVal * 0.6) * 10.0,
+      size.height * 0.25 + math.sin(loopVal * 0.8) * 5.0,
+    );
+    _drawSmilingCloud(canvas, cloud2Offset, 24);
+
+    final cloud3Offset = Offset(
+      size.width * 0.85 + math.sin(loopVal * 0.7) * 8.0,
+      size.height * 0.65 + math.cos(loopVal * 0.9) * 6.0,
+    );
+    _drawSmilingCloud(canvas, cloud3Offset, 26);
+
+    // 4. Gambar matahari tersenyum
+    _drawCuteSun(canvas, Offset(size.width * 0.55, size.height * 0.12), 22, loopVal);
+
+    // 5. Gambar bintang-bintang berkelip manis
+    _drawStar(canvas, Offset(size.width * 0.38, size.height * 0.15), 8, themeColor, loopVal, 0);
+    _drawStar(canvas, Offset(size.width * 0.72, size.height * 0.28), 6, themeColor.withOpacity(0.8), loopVal, 1);
+    _drawStar(canvas, Offset(size.width * 0.12, size.height * 0.52), 7, themeColor, loopVal, 2);
+    _drawStar(canvas, Offset(size.width * 0.88, size.height * 0.48), 8, themeColor.withOpacity(0.8), loopVal, 3);
+    _drawStar(canvas, Offset(size.width * 0.22, size.height * 0.80), 9, themeColor, loopVal, 4);
+    _drawStar(canvas, Offset(size.width * 0.78, size.height * 0.78), 7, themeColor.withOpacity(0.8), loopVal, 5);
+
+    // 6. Gambar hati berdenyut lembut
+    final heartColor = const Color(0xFFFDA4AF); // Sweet pink
+    _drawHeart(canvas, Offset(size.width * 0.28, size.height * 0.32), 10, heartColor, loopVal, 0);
+    _drawHeart(canvas, Offset(size.width * 0.68, size.height * 0.58), 12, heartColor.withOpacity(0.85), loopVal, 1);
+    _drawHeart(canvas, Offset(size.width * 0.18, size.height * 0.12), 8, heartColor, loopVal, 2);
+    _drawHeart(canvas, Offset(size.width * 0.85, size.height * 0.85), 11, heartColor.withOpacity(0.85), loopVal, 3);
+  }
+
+  void _drawSmilingCloud(Canvas canvas, Offset center, double radius) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.82)
+      ..style = PaintingStyle.fill;
+    
+    // 3 overlapping circles
+    canvas.drawCircle(center, radius, paint);
+    canvas.drawCircle(Offset(center.dx - radius * 0.6, center.dy + radius * 0.1), radius * 0.75, paint);
+    canvas.drawCircle(Offset(center.dx + radius * 0.6, center.dy + radius * 0.1), radius * 0.75, paint);
+
+    // Drawing facial expressions
+    final linePaint = Paint()
+      ..color = const Color(0xFF4A4A4A).withOpacity(0.55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round;
+
+    // Eyes
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(center.dx - radius * 0.25, center.dy - radius * 0.05), radius: 3.0),
+      math.pi, math.pi, false, linePaint,
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(center.dx + radius * 0.25, center.dy - radius * 0.05), radius: 3.0),
+      math.pi, math.pi, false, linePaint,
+    );
+    
+    // Happy Smiling Mouth
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(center.dx, center.dy + radius * 0.15), radius: 4.0),
+      0, math.pi, false, linePaint,
+    );
+
+    // Cute pink cheeks
+    final cheekPaint = Paint()
+      ..color = const Color(0xFFFDA4AF).withOpacity(0.45)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(center.dx - radius * 0.4, center.dy + radius * 0.15), 3, cheekPaint);
+    canvas.drawCircle(Offset(center.dx + radius * 0.4, center.dy + radius * 0.15), 3, cheekPaint);
+  }
+
+  void _drawCuteSun(Canvas canvas, Offset center, double radius, double loopVal) {
+    final pulseRadius = radius * (1.0 + 0.04 * math.sin(loopVal * 1.5));
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Glow ring
+    paint.color = const Color(0xFFFEF08A).withOpacity(0.3 + 0.08 * math.sin(loopVal));
+    canvas.drawCircle(center, pulseRadius * 1.35, paint);
+
+    // Sun core
+    paint.color = const Color(0xFFFACC15);
+    canvas.drawCircle(center, pulseRadius, paint);
+
+    // Cute face
+    final linePaint = Paint()
+      ..color = const Color(0xFF4A4A4A).withOpacity(0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(Offset(center.dx - pulseRadius * 0.25, center.dy - pulseRadius * 0.1), 1.2, Paint()..color = const Color(0xFF4A4A4A));
+    canvas.drawCircle(Offset(center.dx + pulseRadius * 0.25, center.dy - pulseRadius * 0.1), 1.2, Paint()..color = const Color(0xFF4A4A4A));
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(center.dx, center.dy + pulseRadius * 0.1), radius: 3.0),
+      0, math.pi, false, linePaint,
+    );
+
+    // Rays (rotating slowly)
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFACC15).withOpacity(0.85)
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 8; i++) {
+      double angle = i * (math.pi / 4) + (loopVal * 0.2);
+      double startX = center.dx + (pulseRadius * 1.2) * math.cos(angle);
+      double startY = center.dy + (pulseRadius * 1.2) * math.sin(angle);
+      double endX = center.dx + (pulseRadius * 1.42) * math.cos(angle);
+      double endY = center.dy + (pulseRadius * 1.42) * math.sin(angle);
+      canvas.drawLine(Offset(startX, startY), Offset(endX, endY), rayPaint);
+    }
+  }
+
+  void _drawStar(Canvas canvas, Offset center, double size, Color color, double loopVal, int index) {
+    final starPulse = 0.5 + 0.5 * math.sin(loopVal * 1.6 + index * 1.2);
+    final pulseSize = size * (0.7 + 0.3 * starPulse);
+    
+    final paint = Paint()
+      ..color = color.withOpacity(0.35 + 0.5 * starPulse)
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(center.dx, center.dy - pulseSize);
+    path.lineTo(center.dx + pulseSize * 0.25, center.dy - pulseSize * 0.25);
+    path.lineTo(center.dx + pulseSize, center.dy - pulseSize * 0.1);
+    path.lineTo(center.dx + pulseSize * 0.4, center.dy + pulseSize * 0.3);
+    path.lineTo(center.dx + pulseSize * 0.55, center.dy + pulseSize);
+    path.lineTo(center.dx, center.dy + pulseSize * 0.55);
+    path.lineTo(center.dx - pulseSize * 0.55, center.dy + pulseSize);
+    path.lineTo(center.dx - pulseSize * 0.4, center.dy + pulseSize * 0.3);
+    path.lineTo(center.dx - pulseSize, center.dy - pulseSize * 0.1);
+    path.lineTo(center.dx - pulseSize * 0.25, center.dy - pulseSize * 0.25);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawHeart(Canvas canvas, Offset center, double width, Color color, double loopVal, int index) {
+    final heartPulse = 1.0 + 0.12 * math.sin(loopVal * 2.2 + index * 1.5);
+    final pulseWidth = width * heartPulse;
+    
+    final paint = Paint()
+      ..color = color.withOpacity(0.5 + 0.4 * math.sin(loopVal * 2.2 + index * 1.5))
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(center.dx, center.dy + pulseWidth * 0.35);
+    path.cubicTo(
+      center.dx - pulseWidth * 0.6, center.dy - pulseWidth * 0.5,
+      center.dx - pulseWidth * 1.1, center.dy + pulseWidth * 0.2,
+      center.dx, center.dy + pulseWidth * 0.95,
+    );
+    path.cubicTo(
+      center.dx + pulseWidth * 1.1, center.dy + pulseWidth * 0.2,
+      center.dx + pulseWidth * 0.6, center.dy - pulseWidth * 0.5,
+      center.dx, center.dy + pulseWidth * 0.35,
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant OnboardingDoodlePainter oldDelegate) {
+    return oldDelegate.pageIndex != pageIndex ||
+        oldDelegate.animationValue != animationValue ||
+        oldDelegate.themeColor != themeColor ||
+        oldDelegate.startColor != startColor ||
+        oldDelegate.endColor != endColor;
+  }
+}
+
+/// Painter kustom untuk menggambar ilustrasi detail setiap slide onboarding secara mandiri
+class SlideIllustrationPainter extends CustomPainter {
+  final int pageIndex;
+  final double animationValue;
+  final Color themeColor;
+
+  SlideIllustrationPainter({
+    required this.pageIndex,
+    required this.animationValue,
+    required this.themeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2); // local center (90, 90)
     final loopVal = animationValue * 2 * math.pi;
 
     switch (pageIndex) {
       case 0:
-        // Slide 1: Welcome (Pelangi + Parallax Awan + Matahari + Bintang/Hati Ramai)
-        _drawRainbow(canvas, center + const Offset(0, 20), themeColor);
-        _drawSun(canvas, center + Offset(90, -80), 32, loopVal);
-        
-        // 4 Awan Parallax (berbeda kecepatan & ukuran untuk efek kedalaman)
-        _drawCloud(canvas, center + Offset(math.sin(loopVal) * 18 - 50, 40), 55, themeColor);
-        _drawCloud(canvas, center + Offset(math.cos(loopVal * 1.3) * 12 + 60, 70), 38, themeColor.withOpacity(0.55));
-        _drawCloud(canvas, center + Offset(math.sin(loopVal * 0.8) * 15 - 90, 80), 32, themeColor.withOpacity(0.35));
-        _drawCloud(canvas, center + Offset(math.cos(loopVal * 0.9) * 10 + 100, 20), 42, themeColor.withOpacity(0.45));
-        
-        _drawSmallHeartsAndStars(canvas, size, loopVal, themeColor);
+        // Slide 1: Welcome (Pelangi mini + hati besar berdenyut + kilau)
+        _drawRainbow(canvas, center + const Offset(0, 15), themeColor);
+        final pulseScale = 1.0 + 0.08 * math.sin(loopVal * 1.8);
+        _drawPulsingHeart(canvas, center + const Offset(0, -5), 35 * pulseScale, themeColor);
+        _drawSmallSparkles(canvas, center, loopVal, themeColor);
         break;
 
       case 1:
-        // Slide 2: Monitoring (Clipboard Checklist + Kaca Pembesar Melayang + Lampu Ide + Bintang Ramai)
-        _drawTwinklingStars(canvas, center, loopVal, themeColor);
-        _drawFloatingPapers(canvas, center, loopVal, themeColor);
+        // Slide 2: Monitoring (Clipboard Checklist + Kaca Pembesar Melayang + Lampu Ide)
         _drawExpertClipboard(canvas, center, loopVal, themeColor);
         
-        // Gambar Kaca Pembesar dengan gerakan aktif memindai (Scanning)
-        final sweepX = center.dx + 25 * math.sin(loopVal * 2.2);
-        final sweepY = center.dy - 35 + (1.0 + math.sin(loopVal * 0.7)) * 35;
-        _drawMagnifyingGlass(canvas, Offset(sweepX, sweepY), 24, themeColor);
+        final sweepX = center.dx + 20 * math.sin(loopVal * 2.2);
+        final sweepY = center.dy - 30 + (1.0 + math.sin(loopVal * 0.7)) * 25;
+        _drawMagnifyingGlass(canvas, Offset(sweepX, sweepY), 20, themeColor);
         
-        // Lampu Ide / Insight dengan radiasi gelombang energi cahaya yang memancar
-        _drawLightbulbWithRays(canvas, center + const Offset(70, -50), loopVal, themeColor);
+        _drawLightbulbWithRays(canvas, center + const Offset(55, -45), loopVal, themeColor);
         break;
 
       case 2:
-        // Slide 3: Mood Tracker (Gelombang Sinus Mood + Balon Emoji Terikat + Gelembung Naik)
+        // Slide 3: Mood Tracker (Gelombang Sinus Mood + Balon Emoji + Gelembung Naik)
         _drawMoodSineWave(canvas, size, center, loopVal, themeColor);
         _drawRisingBubbles(canvas, size, loopVal, themeColor);
         
-        // Balon Emoji Bergoyang (tali terikat ke grafik)
-        final pulseScale = 1.0 + 0.08 * math.sin(loopVal);
-        _drawPulsingHeart(canvas, center + const Offset(0, -60), 40 * pulseScale, themeColor.withOpacity(0.85));
-        
         _drawEmojiBalloon(
           canvas, 
-          center + Offset(-75, math.sin(loopVal + math.pi/3) * 10 - 20), 
-          24, 
+          center + Offset(-45, math.sin(loopVal + math.pi / 3) * 8 - 15), 
+          18, 
           Icons.sentiment_very_satisfied_rounded, 
           themeColor, 
           0.05 * math.sin(loopVal * 1.5)
         );
         _drawEmojiBalloon(
           canvas, 
-          center + Offset(75, math.sin(loopVal - math.pi/3) * 8 - 40), 20, 
+          center + Offset(45, math.sin(loopVal - math.pi / 3) * 7 - 25), 
+          15, 
           Icons.sentiment_satisfied_alt_rounded, 
           themeColor.withOpacity(0.7), 
           -0.06 * math.cos(loopVal * 1.2)
@@ -360,536 +577,30 @@ class OnboardingDoodlePainter extends CustomPainter {
         break;
 
       case 3:
-        // Slide 4: Relaksasi Napas (Aliran Angin + Riak Napas Berlapis + Spa Icon + Daun Berguguran)
-        _drawWindBreeze(canvas, size, center, loopVal, themeColor);
-        
-        // 4 Tingkat Riak Napas Konsentris
-        final waveRadius = 70.0 + 18.0 * math.sin(loopVal - math.pi / 2);
+        // Slide 4: Relaksasi Napas (Riak Napas Berlapis + Spa Icon + Daun Berguguran)
+        final waveRadius = 45.0 + 12.0 * math.sin(loopVal - math.pi / 2);
         _drawBreathingWaves(canvas, center, waveRadius, themeColor);
-        
-        _drawBouncingIcon(canvas, center, Icons.spa_outlined, 44, themeColor);
+        _drawBouncingIcon(canvas, center, Icons.spa_outlined, 36, themeColor);
         _drawFloatingLeaves(canvas, center, loopVal, themeColor);
         break;
     }
   }
 
-  // --- Helpers Menggambar Doodle Baru & Lebih Ramai ---
+  // --- Helper methods untuk SlideIllustrationPainter ---
 
   void _drawRainbow(Canvas canvas, Offset center, Color color) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 5.0;
+      ..strokeWidth = 4.0;
 
-    final rect1 = Rect.fromCircle(center: center + const Offset(0, 40), radius: 100);
-    final rect2 = Rect.fromCircle(center: center + const Offset(0, 40), radius: 112);
-    final rect3 = Rect.fromCircle(center: center + const Offset(0, 40), radius: 124);
+    final rect1 = Rect.fromCircle(center: center + const Offset(0, 25), radius: 55);
+    final rect2 = Rect.fromCircle(center: center + const Offset(0, 25), radius: 65);
+    final rect3 = Rect.fromCircle(center: center + const Offset(0, 25), radius: 75);
 
-    canvas.drawArc(rect1, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.12));
-    canvas.drawArc(rect2, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.08));
-    canvas.drawArc(rect3, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.04));
-  }
-
-  void _drawCloud(Canvas canvas, Offset offset, double width, Color color) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.16)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path()
-      ..moveTo(offset.dx, offset.offsetY(10))
-      ..arcToPoint(Offset(offset.dx + width * 0.3, offset.offsetY(-10)),
-          radius: Radius.circular(width * 0.2))
-      ..arcToPoint(Offset(offset.dx + width * 0.7, offset.offsetY(-10)),
-          radius: Radius.circular(width * 0.25))
-      ..arcToPoint(Offset(offset.dx + width, offset.offsetY(10)),
-          radius: Radius.circular(width * 0.2))
-      ..arcToPoint(offset, radius: Radius.circular(width * 0.15))
-      ..close();
-
-    canvas.drawPath(path, paint);
-    canvas.drawPath(path, strokePaint);
-  }
-
-  void _drawSun(Canvas canvas, Offset offset, double radius, double rotation) {
-    final fillPaint = Paint()
-      ..color = const Color(0xFFFFD460).withOpacity(0.25)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = const Color(0xFFFFB100).withOpacity(0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-
-    canvas.drawCircle(offset, radius, fillPaint);
-    canvas.drawCircle(offset, radius, strokePaint);
-
-    // Sinar Matahari Berputar
-    final numRays = 8;
-    for (int i = 0; i < numRays; i++) {
-      final angle = rotation + (i * 2 * math.pi / numRays);
-      final start = Offset(
-        offset.dx + radius * 1.25 * math.cos(angle),
-        offset.dy + radius * 1.25 * math.sin(angle),
-      );
-      final end = Offset(
-        offset.dx + radius * 1.55 * math.cos(angle),
-        offset.dy + radius * 1.55 * math.sin(angle),
-      );
-      canvas.drawLine(start, end, strokePaint);
-    }
-  }
-
-  void _drawSmallHeartsAndStars(Canvas canvas, Size size, double loopVal, Color color) {
-    final fillPaint = Paint()..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // Partikel mengapung
-    final particles = [
-      Offset(size.width * 0.15, size.height * 0.15 + math.sin(loopVal) * 12),
-      Offset(size.width * 0.85, size.height * 0.18 + math.cos(loopVal) * 10),
-      Offset(size.width * 0.22, size.height * 0.42 + math.cos(loopVal * 1.2) * 8),
-      Offset(size.width * 0.78, size.height * 0.45 + math.sin(loopVal * 0.9) * 14),
-      Offset(size.width * 0.45, size.height * 0.10 + math.sin(loopVal * 1.5) * 6),
-      Offset(size.width * 0.10, size.height * 0.30 + math.cos(loopVal * 0.7) * 10),
-      Offset(size.width * 0.90, size.height * 0.35 + math.sin(loopVal * 1.1) * 8),
-    ];
-
-    for (int i = 0; i < particles.length; i++) {
-      final pos = particles[i];
-      if (i % 2 == 0) {
-        // Gambar bintang kecil (silang)
-        canvas.drawLine(Offset(pos.dx - 5, pos.dy), Offset(pos.dx + 5, pos.dy), strokePaint);
-        canvas.drawLine(Offset(pos.dx, pos.dy - 5), Offset(pos.dx, pos.dy + 5), strokePaint);
-      } else {
-        // Gambar lingkaran gelembung kecil
-        canvas.drawCircle(pos, 3, strokePaint);
-        canvas.drawCircle(pos, 1.5, fillPaint..color = color.withOpacity(0.15));
-      }
-    }
-  }
-
-  void _drawTwinklingStars(Canvas canvas, Offset center, double loopVal, Color color) {
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.65)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 2.0;
-
-    final starPositions = [
-      Offset(center.dx - 110, center.dy - 50),
-      Offset(center.dx + 110, center.dy - 60),
-      Offset(center.dx - 100, center.dy + 70),
-      Offset(center.dx + 110, center.dy + 50),
-      Offset(center.dx - 30, center.dy - 80),
-      Offset(center.dx + 40, center.dy + 90),
-    ];
-
-    for (int i = 0; i < starPositions.length; i++) {
-      final offset = starPositions[i];
-      final alphaFactor = 0.25 + 0.75 * math.sin(loopVal + i * 1.3);
-      strokePaint.color = color.withOpacity(0.55 * alphaFactor);
-      
-      final starSize = 6.0 + 4.0 * alphaFactor;
-      canvas.drawLine(Offset(offset.dx - starSize, offset.dy), Offset(offset.dx + starSize, offset.dy), strokePaint);
-      canvas.drawLine(Offset(offset.dx, offset.dy - starSize), Offset(offset.dx, offset.dy + starSize), strokePaint);
-    }
-  }
-
-  void _drawExpertClipboard(Canvas canvas, Offset center, double loopVal, Color color) {
-    final boardPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-
-    final clipPaint = Paint()
-      ..color = color.withOpacity(0.2)
-      ..style = PaintingStyle.fill;
-    final clipStroke = Paint()
-      ..color = color.withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    // 1. Gambar Board (Clipboard) dengan Bayangan Menyala (Glow Shadow)
-    final boardRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: center, width: 110, height: 140),
-      const Radius.circular(16),
-    );
-    final glowPaint = Paint()
-      ..color = color.withOpacity(0.06)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    canvas.drawRRect(boardRect.shift(const Offset(0, 5)), glowPaint);
-
-    canvas.drawRRect(boardRect, boardPaint);
-    canvas.drawRRect(boardRect, strokePaint);
-
-    // 2. Gambar Klip Logam di bagian atas
-    final clipRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: center - const Offset(0, 70), width: 50, height: 16),
-      const Radius.circular(6),
-    );
-    canvas.drawRRect(clipRect, clipPaint);
-    canvas.drawRRect(clipRect, clipStroke);
-
-    // 3. Gambar Checklist Item
-    final textColor = color.withOpacity(0.7);
-    final checkColor = const Color(0xFF00C9A7); // Hijau checkmarks
-
-    for (int i = 0; i < 3; i++) {
-      final yOffset = center.dy - 35 + i * 35;
-      
-      // Kotak Checklist (14x14)
-      final boxRect = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx - 35, yOffset), width: 14, height: 14),
-        const Radius.circular(3),
-      );
-      canvas.drawRRect(boxRect, Paint()..color = color.withOpacity(0.06)..style = PaintingStyle.fill);
-      canvas.drawRRect(boxRect, strokePaint..strokeWidth = 1.5);
-
-      // Baris teks coretan tangan bergaya meliuk kustom
-      final linePath = Path()
-        ..moveTo(center.dx - 18, yOffset)
-        ..quadraticBezierTo(center.dx + 10, yOffset + math.sin(loopVal + i) * 1.5, center.dx + 40, yOffset);
-      canvas.drawPath(linePath, strokePaint..strokeWidth = 1.8..color = textColor);
-
-      // Baris sub-teks di bawahnya
-      final subLinePath = Path()
-        ..moveTo(center.dx - 18, yOffset + 6)
-        ..quadraticBezierTo(center.dx + 5, yOffset + 6 + math.cos(loopVal + i) * 1.0, center.dx + 20, yOffset + 6);
-      canvas.drawPath(subLinePath, strokePaint..strokeWidth = 1.0..color = textColor.withOpacity(0.4));
-
-      // Centang memantul / berdetak bergantian di dalam kotak
-      final checkPulse = 0.5 + 0.5 * math.sin(loopVal * 1.5 - i * math.pi / 2);
-      if (checkPulse > 0.3) {
-        final checkPaint = Paint()
-          ..color = checkColor.withOpacity(0.85 * checkPulse)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.2
-          ..strokeCap = StrokeCap.round;
-        
-        final checkPath = Path()
-          ..moveTo(center.dx - 39, yOffset)
-          ..lineTo(center.dx - 36, yOffset + 3)
-          ..lineTo(center.dx - 31, yOffset - 3);
-        canvas.drawPath(checkPath, checkPaint);
-
-        // Efek riak melingkar meluas (Success ripple) saat tercentang
-        final ripplePaint = Paint()
-          ..color = checkColor.withOpacity(0.3 * (1.0 - (checkPulse - 0.3) / 0.7))
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
-        canvas.drawCircle(Offset(center.dx - 35, yOffset), 8 + 12 * ((checkPulse - 0.3) / 0.7), ripplePaint);
-      }
-    }
-  }
-
-  void _drawMagnifyingGlass(Canvas canvas, Offset offset, double radius, Color color) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.12)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round;
-
-    // 1. Gagang Kayu Kaca Pembesar (miring 45 derajat)
-    canvas.save();
-    canvas.translate(offset.dx, offset.dy);
-    canvas.rotate(math.pi / 4);
-    canvas.drawLine(
-      Offset(0, radius),
-      Offset(0, radius + 22),
-      strokePaint..strokeWidth = 4.5..color = color.withOpacity(0.65),
-    );
-    canvas.restore();
-
-    // 2. Lensa Kaca Pembesar (Lingkaran)
-    canvas.drawCircle(offset, radius, paint);
-    canvas.drawCircle(offset, radius, strokePaint..strokeWidth = 3.5);
-
-    // 3. Efek Refleksi/Kilau Lensa
-    final reflectionPaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-    
-    final arcRect = Rect.fromCircle(center: offset, radius: radius * 0.7);
-    canvas.drawArc(arcRect, -math.pi * 0.8, math.pi * 0.4, false, reflectionPaint);
-  }
-
-  void _drawLightbulbWithRays(Canvas canvas, Offset offset, double loopVal, Color color) {
-    final bulbPulse = 1.0 + 0.08 * math.sin(loopVal * 1.8);
-    final bulbSize = 26.0 * bulbPulse;
-    
-    // 1. Gambar aura cahaya lingkaran kuning tipis di belakang
-    final glowPaint = Paint()
-      ..color = const Color(0xFFFFD460).withOpacity(0.12 * (1.0 + 0.3 * math.sin(loopVal * 1.8)))
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(offset, bulbSize * 1.8, glowPaint);
-    canvas.drawCircle(offset, bulbSize * 1.2, glowPaint..color = const Color(0xFFFFD460).withOpacity(0.18));
-    
-    // 2. Gambar pancaran sinar energi (Insight Rays)
-    final rayPaint = Paint()
-      ..color = const Color(0xFFFFB100).withOpacity(0.6 + 0.3 * math.sin(loopVal * 1.8))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-    
-    final numRays = 8;
-    for (int i = 0; i < numRays; i++) {
-      final angle = (i * 2 * math.pi / numRays) + (loopVal * 0.1);
-      final rayStart = Offset(
-        offset.dx + bulbSize * 0.9 * math.cos(angle),
-        offset.dy + bulbSize * 0.9 * math.sin(angle),
-      );
-      final rayEnd = Offset(
-        offset.dx + (bulbSize * 1.35 + 4 * math.sin(loopVal * 2.0 + i)) * math.cos(angle),
-        offset.dy + (bulbSize * 1.35 + 4 * math.sin(loopVal * 2.0 + i)) * math.sin(angle),
-      );
-      canvas.drawLine(rayStart, rayEnd, rayPaint);
-    }
-    
-    // 3. Gambar Icon Lampu Ide
-    _drawBouncingIcon(canvas, offset, Icons.lightbulb_rounded, bulbSize, const Color(0xFFFFD460));
-    _drawBouncingIcon(canvas, offset, Icons.lightbulb_outline_rounded, bulbSize, const Color(0xFFFFB100));
-  }
-
-  void _drawFloatingPapers(Canvas canvas, Offset center, double loopVal, Color color) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.85)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    
-    final paperPositions = [
-      Offset(center.dx - 100, center.dy + 65),
-      Offset(center.dx + 105, center.dy + 45),
-      Offset(center.dx - 90, center.dy - 75),
-    ];
-    
-    for (int i = 0; i < paperPositions.length; i++) {
-      final pos = paperPositions[i];
-      final floatY = math.sin(loopVal + i * 1.8) * 8.0;
-      final floatAngle = math.cos(loopVal * 0.9 + i) * 0.15;
-      
-      canvas.save();
-      canvas.translate(pos.dx, pos.dy + floatY);
-      canvas.rotate(floatAngle);
-      
-      // Menggambar rect miring kertas kecil
-      final rect = Rect.fromCenter(center: Offset.zero, width: 22, height: 28);
-      canvas.drawRect(rect, paint);
-      canvas.drawRect(rect, strokePaint);
-      
-      // Garis coretan teks di kertas
-      canvas.drawLine(const Offset(-7, -8), const Offset(7, -8), strokePaint..strokeWidth = 1.0);
-      canvas.drawLine(const Offset(-7, -2), const Offset(4, -2), strokePaint);
-      canvas.drawLine(const Offset(-7, 4), const Offset(6, 4), strokePaint);
-      
-      canvas.restore();
-    }
-  }
-
-  void _drawMoodSineWave(Canvas canvas, Size size, Offset center, double loopVal, Color color) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    final startX = size.width * 0.05;
-    final endX = size.width * 0.95;
-    final yCenter = center.dy + 30;
-
-    path.moveTo(startX, yCenter);
-    for (double x = startX; x <= endX; x += 6) {
-      final relativeX = x / size.width;
-      final y = yCenter + 22 * math.sin(loopVal + relativeX * 2.8 * math.pi);
-      path.lineTo(x, y);
-    }
-    canvas.drawPath(path, paint);
-
-    // Garis bantu tipis bermotif putus-putus di atasnya
-    final dashPaint = Paint()
-      ..color = color.withOpacity(0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final pathDash = Path();
-    pathDash.moveTo(startX, yCenter - 35);
-    for (double x = startX; x <= endX; x += 15) {
-      final relativeX = x / size.width;
-      final y = yCenter - 35 + 22 * math.sin(loopVal + relativeX * 2.8 * math.pi);
-      pathDash.lineTo(x, y);
-      pathDash.moveTo(x + 8, yCenter - 35 + 22 * math.sin(loopVal + (x + 8) / size.width * 2.8 * math.pi));
-    }
-    canvas.drawPath(pathDash, dashPaint);
-  }
-
-  void _drawRisingBubbles(Canvas canvas, Size size, double loopVal, Color color) {
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.25)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    final bubblePositions = [
-      Offset(size.width * 0.12, size.height * 0.4 - (loopVal * 10) % 180),
-      Offset(size.width * 0.28, size.height * 0.35 - ((loopVal + 2) * 12) % 180),
-      Offset(size.width * 0.72, size.height * 0.43 - ((loopVal + 4) * 8) % 180),
-      Offset(size.width * 0.88, size.height * 0.38 - ((loopVal + 1) * 15) % 180),
-    ];
-
-    for (var pos in bubblePositions) {
-      canvas.drawCircle(pos, 4.0 + (pos.dy % 3), strokePaint);
-      canvas.drawCircle(pos - const Offset(1, 1), 1, Paint()..color = Colors.white.withOpacity(0.3));
-    }
-  }
-
-  void _drawEmojiBalloon(Canvas canvas, Offset offset, double radius, IconData icon, Color color, double angle) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.14)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.55)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    canvas.save();
-    canvas.translate(offset.dx, offset.dy);
-    canvas.rotate(angle);
-
-    // Balon Lingkaran
-    canvas.drawCircle(Offset.zero, radius, paint);
-    canvas.drawCircle(Offset.zero, radius, strokePaint);
-
-    // Simpul Segitiga Balon di Bawah
-    final triPath = Path()
-      ..moveTo(-3, radius)
-      ..lineTo(3, radius)
-      ..lineTo(0, radius + 5)
-      ..close();
-    canvas.drawPath(triPath, paint..color = color.withOpacity(0.35));
-    canvas.drawPath(triPath, strokePaint);
-
-    // Tali Balon Bergelombang
-    final stringPath = Path()
-      ..moveTo(0, radius + 5)
-      ..quadraticBezierTo(5, radius + 15, -2, radius + 28)
-      ..quadraticBezierTo(2, radius + 35, 0, radius + 45);
-    canvas.drawPath(stringPath, strokePaint..strokeWidth = 1.2..color = color.withOpacity(0.4));
-
-    // Emoji Icon di Dalam Balon
-    _drawBouncingIcon(canvas, Offset.zero, icon, radius * 1.2, color.withOpacity(0.8));
-
-    canvas.restore();
-  }
-
-  void _drawWindBreeze(Canvas canvas, Size size, Offset center, double loopVal, Color color) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final yCenter = center.dy;
-    final startX = size.width * 0.05;
-    final endX = size.width * 0.95;
-
-    for (int i = 0; i < 3; i++) {
-      final path = Path();
-      final offsetOffset = i * 25 - 25;
-      path.moveTo(startX, yCenter + offsetOffset);
-      for (double x = startX; x <= endX; x += 12) {
-        final relativeX = x / size.width;
-        final y = yCenter + offsetOffset + 18 * math.sin(loopVal + relativeX * 1.5 * math.pi + i * math.pi / 3);
-        path.lineTo(x, y);
-      }
-      canvas.drawPath(path, paint..color = color.withOpacity(0.12 - i * 0.035));
-    }
-  }
-
-  void _drawBreathingWaves(Canvas canvas, Offset offset, double radius, Color color) {
-    final fillPaint = Paint()
-      ..color = color.withOpacity(0.04)
-      ..style = PaintingStyle.fill;
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    // 4 Tingkat Riak Napas Konsentris
-    canvas.drawCircle(offset, radius, fillPaint);
-    canvas.drawCircle(offset, radius, strokePaint);
-
-    canvas.drawCircle(offset, radius * 0.8, strokePaint..color = color.withOpacity(0.22));
-    canvas.drawCircle(offset, radius * 0.6, strokePaint..color = color.withOpacity(0.14));
-    canvas.drawCircle(offset, radius * 0.4, strokePaint..color = color.withOpacity(0.08));
-  }
-
-  void _drawFloatingLeaves(Canvas canvas, Offset center, double loopVal, Color color) {
-    final leafPaint = Paint()
-      ..color = color.withOpacity(0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    final leafOffsets = [
-      Offset(center.dx - 100, center.dy + 50 + math.sin(loopVal) * 12),
-      Offset(center.dx + 100, center.dy - 50 + math.cos(loopVal) * 14),
-      Offset(center.dx - 80, center.dy - 70 + math.cos(loopVal * 1.1) * 8),
-      Offset(center.dx + 80, center.dy + 70 + math.sin(loopVal * 0.9) * 10),
-    ];
-
-    for (int i = 0; i < leafOffsets.length; i++) {
-      final pos = leafOffsets[i];
-      final angle = (i % 2 == 0) ? 0.35 + i * 0.2 : -0.4 - i * 0.15;
-      canvas.save();
-      canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(angle + math.sin(loopVal + i) * 0.18);
-      
-      final path = Path()
-        ..moveTo(0, 0)
-        ..quadraticBezierTo(-8, -12, 0, -24)
-        ..quadraticBezierTo(8, -12, 0, 0);
-      canvas.drawPath(path, leafPaint);
-      canvas.drawLine(const Offset(0, 0), const Offset(0, -20), leafPaint);
-      canvas.restore();
-    }
-  }
-
-  void _drawBouncingIcon(Canvas canvas, Offset offset, IconData icon, double size, Color color) {
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    textPainter.text = TextSpan(
-      text: String.fromCharCode(icon.codePoint),
-      style: TextStyle(
-        fontSize: size,
-        fontFamily: icon.fontFamily,
-        package: icon.fontPackage,
-        color: color,
-        shadows: [
-          Shadow(
-            color: Colors.white.withOpacity(0.9),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-    );
-    textPainter.layout();
-    textPainter.paint(canvas, offset - Offset(textPainter.width / 2, textPainter.height / 2));
+    canvas.drawArc(rect1, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.15));
+    canvas.drawArc(rect2, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.10));
+    canvas.drawArc(rect3, math.pi + 0.3, math.pi - 0.6, false, paint..color = color.withOpacity(0.05));
   }
 
   void _drawPulsingHeart(Canvas canvas, Offset offset, double size, Color color) {
@@ -899,7 +610,7 @@ class OnboardingDoodlePainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = color.withOpacity(0.65)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
+      ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
@@ -923,17 +634,319 @@ class OnboardingDoodlePainter extends CustomPainter {
     canvas.drawPath(path, strokePaint);
   }
 
+  void _drawSmallSparkles(Canvas canvas, Offset center, double loopVal, Color color) {
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final sparkleOffsets = [
+      Offset(center.dx - 55, center.dy - 35 + math.sin(loopVal) * 4),
+      Offset(center.dx + 55, center.dy - 30 + math.cos(loopVal) * 4),
+      Offset(center.dx - 45, center.dy + 40 + math.cos(loopVal * 1.2) * 5),
+      Offset(center.dx + 45, center.dy + 35 + math.sin(loopVal * 0.9) * 5),
+    ];
+
+    for (var pos in sparkleOffsets) {
+      canvas.drawLine(Offset(pos.dx - 4, pos.dy), Offset(pos.dx + 4, pos.dy), strokePaint);
+      canvas.drawLine(Offset(pos.dx, pos.dy - 4), Offset(pos.dx, pos.dy + 4), strokePaint);
+    }
+  }
+
+  void _drawExpertClipboard(Canvas canvas, Offset center, double loopVal, Color color) {
+    final boardPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    final clipPaint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..style = PaintingStyle.fill;
+    final clipStroke = Paint()
+      ..color = color.withOpacity(0.55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    // 1. Board
+    final boardRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center, width: 95, height: 125),
+      const Radius.circular(12),
+    );
+    canvas.drawRRect(boardRect, boardPaint);
+    canvas.drawRRect(boardRect, strokePaint);
+
+    // 2. Klip Logam
+    final clipRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center - const Offset(0, 62), width: 42, height: 14),
+      const Radius.circular(5),
+    );
+    canvas.drawRRect(clipRect, clipPaint);
+    canvas.drawRRect(clipRect, clipStroke);
+
+    // 3. Checklist Items
+    final textColor = color.withOpacity(0.65);
+    final checkColor = const Color(0xFF00C9A7);
+
+    for (int i = 0; i < 3; i++) {
+      final yOffset = center.dy - 30 + i * 30;
+      
+      // Kotak
+      final boxRect = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(center.dx - 30, yOffset), width: 12, height: 12),
+        const Radius.circular(2.5),
+      );
+      canvas.drawRRect(boxRect, Paint()..color = color.withOpacity(0.05));
+      canvas.drawRRect(boxRect, strokePaint..strokeWidth = 1.2);
+
+      // Coretan baris teks
+      final linePath = Path()
+        ..moveTo(center.dx - 15, yOffset)
+        ..quadraticBezierTo(center.dx + 5, yOffset + math.sin(loopVal + i) * 1.0, center.dx + 35, yOffset);
+      canvas.drawPath(linePath, strokePaint..strokeWidth = 1.5..color = textColor);
+
+      // Centang berdetak
+      final checkPulse = 0.5 + 0.5 * math.sin(loopVal * 1.5 - i * math.pi / 2);
+      if (checkPulse > 0.3) {
+        final checkPaint = Paint()
+          ..color = checkColor.withOpacity(0.8 * checkPulse)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..strokeCap = StrokeCap.round;
+        
+        final checkPath = Path()
+          ..moveTo(center.dx - 34, yOffset)
+          ..lineTo(center.dx - 31, yOffset + 2.5)
+          ..lineTo(center.dx - 27, yOffset - 2.5);
+        canvas.drawPath(checkPath, checkPaint);
+
+        // Efek riak
+        final ripplePaint = Paint()
+          ..color = checkColor.withOpacity(0.25 * (1.0 - (checkPulse - 0.3) / 0.7))
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0;
+        canvas.drawCircle(Offset(center.dx - 30, yOffset), 6 + 10 * ((checkPulse - 0.3) / 0.7), ripplePaint);
+      }
+    }
+  }
+
+  void _drawMagnifyingGlass(Canvas canvas, Offset offset, double radius, Color color) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.65)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.8
+      ..strokeCap = StrokeCap.round;
+
+    // 1. Gagang
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.rotate(math.pi / 4);
+    canvas.drawLine(
+      Offset(0, radius),
+      Offset(0, radius + 16),
+      strokePaint..strokeWidth = 3.5..color = color.withOpacity(0.55),
+    );
+    canvas.restore();
+
+    // 2. Lensa
+    canvas.drawCircle(offset, radius, paint);
+    canvas.drawCircle(offset, radius, strokePaint..strokeWidth = 2.8);
+
+    // 3. Kilau
+    final reflectionPaint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    
+    final arcRect = Rect.fromCircle(center: offset, radius: radius * 0.7);
+    canvas.drawArc(arcRect, -math.pi * 0.8, math.pi * 0.4, false, reflectionPaint);
+  }
+
+  void _drawLightbulbWithRays(Canvas canvas, Offset offset, double loopVal, Color color) {
+    final bulbPulse = 1.0 + 0.08 * math.sin(loopVal * 1.8);
+    final bulbSize = 20.0 * bulbPulse;
+    
+    final glowPaint = Paint()
+      ..color = const Color(0xFFFFD460).withOpacity(0.1 * (1.0 + 0.3 * math.sin(loopVal * 1.8)))
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(offset, bulbSize * 1.6, glowPaint);
+    
+    final rayPaint = Paint()
+      ..color = const Color(0xFFFFB100).withOpacity(0.5 + 0.3 * math.sin(loopVal * 1.8))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    
+    final numRays = 8;
+    for (int i = 0; i < numRays; i++) {
+      final angle = (i * 2 * math.pi / numRays) + (loopVal * 0.1);
+      final rayStart = Offset(
+        offset.dx + bulbSize * 0.9 * math.cos(angle),
+        offset.dy + bulbSize * 0.9 * math.sin(angle),
+      );
+      final rayEnd = Offset(
+        offset.dx + (bulbSize * 1.3 + 3 * math.sin(loopVal * 2.0 + i)) * math.cos(angle),
+        offset.dy + (bulbSize * 1.3 + 3 * math.sin(loopVal * 2.0 + i)) * math.sin(angle),
+      );
+      canvas.drawLine(rayStart, rayEnd, rayPaint);
+    }
+    
+    _drawBouncingIcon(canvas, offset, Icons.lightbulb_outline_rounded, bulbSize, const Color(0xFFFFB100));
+  }
+
+  void _drawMoodSineWave(Canvas canvas, Size size, Offset center, double loopVal, Color color) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.8
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    final startX = size.width * 0.08;
+    final endX = size.width * 0.92;
+    final yCenter = center.dy + 15;
+
+    path.moveTo(startX, yCenter);
+    for (double x = startX; x <= endX; x += 4) {
+      final relativeX = (x - startX) / (endX - startX);
+      final y = yCenter + 15 * math.sin(loopVal + relativeX * 2.2 * math.pi);
+      path.lineTo(x, y);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawRisingBubbles(Canvas canvas, Size size, double loopVal, Color color) {
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final bubblePositions = [
+      Offset(size.width * 0.15, size.height * 0.7 - ((loopVal * 6) % 90)),
+      Offset(size.width * 0.35, size.height * 0.65 - (((loopVal + 2) * 8) % 90)),
+      Offset(size.width * 0.65, size.height * 0.75 - (((loopVal + 4) * 5) % 90)),
+      Offset(size.width * 0.85, size.height * 0.7 - (((loopVal + 1) * 9) % 90)),
+    ];
+
+    for (var pos in bubblePositions) {
+      canvas.drawCircle(pos, 3.0 + (pos.dy % 2.5), strokePaint);
+    }
+  }
+
+  void _drawEmojiBalloon(Canvas canvas, Offset offset, double radius, IconData icon, Color color, double angle) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.12)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.rotate(angle);
+
+    // Balon
+    canvas.drawCircle(Offset.zero, radius, paint);
+    canvas.drawCircle(Offset.zero, radius, strokePaint);
+
+    // Simpul
+    final triPath = Path()
+      ..moveTo(-2.5, radius)
+      ..lineTo(2.5, radius)
+      ..lineTo(0, radius + 4)
+      ..close();
+    canvas.drawPath(triPath, paint..color = color.withOpacity(0.3));
+    canvas.drawPath(triPath, strokePaint);
+
+    // Tali
+    final stringPath = Path()
+      ..moveTo(0, radius + 4)
+      ..quadraticBezierTo(4, radius + 12, -2, radius + 22)
+      ..quadraticBezierTo(2, radius + 28, 0, radius + 36);
+    canvas.drawPath(stringPath, strokePaint..strokeWidth = 1.0..color = color.withOpacity(0.35));
+
+    // Icon
+    _drawBouncingIcon(canvas, Offset.zero, icon, radius * 1.1, color.withOpacity(0.75));
+
+    canvas.restore();
+  }
+
+  void _drawBreathingWaves(Canvas canvas, Offset offset, double radius, Color color) {
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.04)
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+
+    canvas.drawCircle(offset, radius, fillPaint);
+    canvas.drawCircle(offset, radius, strokePaint);
+
+    canvas.drawCircle(offset, radius * 0.75, strokePaint..color = color.withOpacity(0.18));
+    canvas.drawCircle(offset, radius * 0.5, strokePaint..color = color.withOpacity(0.12));
+    canvas.drawCircle(offset, radius * 0.25, strokePaint..color = color.withOpacity(0.06));
+  }
+
+  void _drawFloatingLeaves(Canvas canvas, Offset center, double loopVal, Color color) {
+    final leafPaint = Paint()
+      ..color = color.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    final leafOffsets = [
+      Offset(center.dx - 60, center.dy + 40 + math.sin(loopVal) * 8),
+      Offset(center.dx + 60, center.dy - 40 + math.cos(loopVal) * 9),
+      Offset(center.dx - 50, center.dy - 50 + math.cos(loopVal * 1.1) * 6),
+      Offset(center.dx + 50, center.dy + 50 + math.sin(loopVal * 0.9) * 7),
+    ];
+
+    for (int i = 0; i < leafOffsets.length; i++) {
+      final pos = leafOffsets[i];
+      final angle = (i % 2 == 0) ? 0.35 + i * 0.15 : -0.4 - i * 0.12;
+      canvas.save();
+      canvas.translate(pos.dx, pos.dy);
+      canvas.rotate(angle + math.sin(loopVal + i) * 0.15);
+      
+      final path = Path()
+        ..moveTo(0, 0)
+        ..quadraticBezierTo(-6, -9, 0, -18)
+        ..quadraticBezierTo(6, -9, 0, 0);
+      canvas.drawPath(path, leafPaint);
+      canvas.drawLine(const Offset(0, 0), const Offset(0, -15), leafPaint);
+      canvas.restore();
+    }
+  }
+
+  void _drawBouncingIcon(Canvas canvas, Offset offset, IconData icon, double size, Color color) {
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    textPainter.text = TextSpan(
+      text: String.fromCharCode(icon.codePoint),
+      style: TextStyle(
+        fontSize: size,
+        fontFamily: icon.fontFamily,
+        package: icon.fontPackage,
+        color: color,
+      ),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, offset - Offset(textPainter.width / 2, textPainter.height / 2));
+  }
+
   @override
-  bool shouldRepaint(covariant OnboardingDoodlePainter oldDelegate) {
+  bool shouldRepaint(covariant SlideIllustrationPainter oldDelegate) {
     return oldDelegate.pageIndex != pageIndex ||
         oldDelegate.animationValue != animationValue ||
-        oldDelegate.themeColor != themeColor ||
-        oldDelegate.startColor != startColor ||
-        oldDelegate.endColor != endColor;
+        oldDelegate.themeColor != themeColor;
   }
-}
-
-extension OffsetExtension on Offset {
-  double offsetY(double delta) => dy + delta;
 }
 

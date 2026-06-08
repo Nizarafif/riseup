@@ -355,19 +355,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // Translucent Form Card
+                    // Translucent Form Card (Chubby & Cute)
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.88),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                        color: Colors.white.withOpacity(0.90),
+                        borderRadius: BorderRadius.circular(38),
+                        border: Border.all(color: Colors.white.withOpacity(0.85), width: 2.2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6C63FF).withOpacity(0.04),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          )
+                            color: const Color(0xFF6C63FF).withOpacity(0.06),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 10),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.01),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Column(
@@ -381,9 +387,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Color(0xFF3F3D56),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
 
-                          // Email Field
+                          // Email Field (Chubby)
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -393,13 +399,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF6C63FF), size: 20),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -413,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Password Field
+                          // Password Field (Chubby)
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscureText,
@@ -432,13 +443,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -460,7 +476,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       value: _rememberMe,
                                       activeColor: const Color(0xFF6C63FF),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
+                                        borderRadius: BorderRadius.circular(5),
                                       ),
                                       onChanged: (val) {
                                         setState(() {
@@ -499,17 +515,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Login Submit Button
+                          // Login Submit Button (Chubby)
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
+                            height: 54,
                             child: ElevatedButton(
                               onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading ? null : _submit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF6C63FF),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(22),
                                 ),
                                 elevation: 0,
                               ),
@@ -526,7 +542,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 20),
                           
                           // Custom Divider
                           Row(
@@ -540,22 +556,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
-                          // Social Media Sign-In buttons
+                          // Social Media Sign-In buttons (Chubby)
                           Row(
                             children: [
                               // Google (Demo User)
                               Expanded(
                                 child: SizedBox(
-                                  height: 48,
+                                  height: 50,
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
                                         : () => _socialLogin('Google', 'user@riseup.com'),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: (_isSocialLoading && _socialPlatform == 'Google')
@@ -584,14 +600,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               // Nomor Telepon (SMS OTP Demo)
                               Expanded(
                                 child: SizedBox(
-                                  height: 48,
+                                  height: 50,
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
                                         : _showPhoneLoginDialog,
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: Row(
@@ -606,31 +622,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Demo tips
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6C63FF).withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF6C63FF).withOpacity(0.12)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            '💡 Tips Sidang / Demo Cepat:',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF6C63FF)),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Klik tombol Google untuk login instan sebagai User.\nUntuk login sebagai Admin/Pakar, silakan ketik email: admin@riseup.com dengan password: password secara manual.\nKlik tombol No. Telepon untuk mencoba masuk dengan simulasi OTP.',
-                            style: TextStyle(fontSize: 10.5, color: Colors.black87, height: 1.4),
                           ),
                         ],
                       ),
