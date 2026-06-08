@@ -5,8 +5,6 @@ import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/diagnostic_provider.dart';
-import '../../models/mood_model.dart';
-import '../../models/history_model.dart';
 
 class MonitoringScreen extends StatefulWidget {
   const MonitoringScreen({super.key});

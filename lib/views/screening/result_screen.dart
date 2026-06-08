@@ -133,7 +133,7 @@ class ResultScreen extends StatelessWidget {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'PENTING: Aplikasi ini menggunakan metode Sistem Pakar Forward Chaining sebagai langkah deteksi awal (screening). Hasil tes bukan merupakan diagnosis final medis/klinis resmi. Jika kondisi Anda memburuk atau mengganggu aktivitas sehari-hari, segera hubungi psikolog atau psikiater profesional.',
+                        'PENTING: Aplikasi ini menggunakan metode Sistem Pakar Forward Chaining sebagai langkah deteksi awal (monitoring). Hasil tes bukan merupakan diagnosis final medis/klinis resmi. Jika kondisi Anda memburuk atau mengganggu aktivitas sehari-hari, segera hubungi psikolog atau psikiater profesional.',
                         style: TextStyle(fontSize: 11, color: Colors.black87, height: 1.5),
                       ),
                     ),

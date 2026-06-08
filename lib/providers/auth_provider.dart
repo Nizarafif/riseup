@@ -10,10 +10,22 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.uninitialized;
   UserModel? _user;
   String _errorMessage = '';
+  bool _onboardingCompleted = false;
 
   AuthStatus get status => _status;
   UserModel? get user => _user;
   String get errorMessage => _errorMessage;
+  bool get onboardingCompleted => _onboardingCompleted;
+
+  void completeOnboarding() {
+    _onboardingCompleted = true;
+    notifyListeners();
+  }
+
+  void resetOnboarding() {
+    _onboardingCompleted = false;
+    notifyListeners();
+  }
 
   AuthProvider() {
     _initAuth();

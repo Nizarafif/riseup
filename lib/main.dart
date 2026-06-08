@@ -5,6 +5,7 @@ import 'providers/diagnostic_provider.dart';
 import 'providers/mood_provider.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/dashboard_screen.dart';
+import 'views/onboarding/onboarding_screen.dart';
 
 void main() async {
   // Pastikan binding Flutter terinisialisasi sebelum memanggil layanan async
@@ -75,7 +76,11 @@ class AuthWrapper extends StatelessWidget {
       case AuthStatus.authenticating:
       case AuthStatus.unauthenticated:
       case AuthStatus.error:
-        return const LoginScreen();
+        if (!authProvider.onboardingCompleted) {
+          return const OnboardingScreen();
+        } else {
+          return const LoginScreen();
+        }
       case AuthStatus.authenticated:
         return const DashboardScreen();
     }

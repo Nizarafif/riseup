@@ -629,7 +629,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Klik tombol Google untuk login instan sebagai User.\nKlik tombol No. Telepon untuk mencoba masuk dengan simulasi OTP.',
+                            'Klik tombol Google untuk login instan sebagai User.\nUntuk login sebagai Admin/Pakar, silakan ketik email: admin@riseup.com dengan password: password secara manual.\nKlik tombol No. Telepon untuk mencoba masuk dengan simulasi OTP.',
                             style: TextStyle(fontSize: 10.5, color: Colors.black87, height: 1.4),
                           ),
                         ],

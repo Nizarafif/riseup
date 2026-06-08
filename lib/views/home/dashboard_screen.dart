@@ -343,14 +343,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Skrining Kesehatan Mental',
+                              'Monitoring Kesehatan Mental',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF3F3D56)),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               latestHistory != null
                                   ? 'Terakhir Tes: ${DateFormat('dd MMM yyyy, HH:mm').format(latestHistory.tanggal)}'
-                                  : 'Kamu belum pernah melakukan skrining.',
+                                  : 'Kamu belum pernah melakukan monitoring.',
                               style: const TextStyle(fontSize: 12, color: Color(0xFF707070)),
                             ),
                           ],
