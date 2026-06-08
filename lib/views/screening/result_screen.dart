@@ -10,6 +10,7 @@ class ResultScreen extends StatelessWidget {
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final diagnosis = diagnosticProvider.latestDiagnosis;
     final isNormal = diagnosis == null || diagnosis.code == 'P000';
+    final isSevere = diagnosis != null && (diagnosis.code == 'P003' || diagnosis.code == 'P004');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -54,13 +55,23 @@ class ResultScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isNormal
                             ? Colors.green.withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
+                            : isSevere
+                                ? Colors.red.withOpacity(0.1)
+                                : Colors.orange.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        isNormal ? Icons.sentiment_satisfied_alt_rounded : Icons.warning_amber_rounded,
+                        isNormal 
+                            ? Icons.sentiment_satisfied_alt_rounded 
+                            : isSevere
+                                ? Icons.mood_bad_rounded
+                                : Icons.sentiment_dissatisfied_rounded,
                         size: 64,
-                        color: isNormal ? Colors.green : Colors.redAccent,
+                        color: isNormal 
+                            ? Colors.green 
+                            : isSevere 
+                                ? Colors.redAccent 
+                                : Colors.orangeAccent,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -80,7 +91,11 @@ class ResultScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: isNormal ? Colors.green[800] : Colors.red[800],
+                        color: isNormal 
+                            ? Colors.green[800] 
+                            : isSevere 
+                                ? Colors.red[800] 
+                                : Colors.orange[800],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -98,6 +113,73 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // Kartu Rekomendasi Utama (Untuk Stress Berat / Depresi)
+              if (isSevere) ...[
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.gavel_rounded, color: Colors.redAccent, size: 22),
+                          SizedBox(width: 12),
+                          Text(
+                            'Saran Penanganan Utama:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Kondisi kesehatan mental Anda terdeteksi berada pada level yang membutuhkan perhatian serius. Penanganan mandiri tidak disarankan sebagai terapi utama. Anda sangat direkomendasikan untuk segera berkonsultasi dengan psikolog atau psikiater profesional.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: Color(0xFF3F3D56),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Membuka kontak konseling Psikolog klinis mitra...'),
+                                backgroundColor: Color(0xFF00C9A7),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 18),
+                          label: const Text(
+                            'Hubungi Psikolog / Konselor',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
 
               // Actionable Solutions Checklist
               const Text(

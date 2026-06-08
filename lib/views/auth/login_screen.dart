@@ -89,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final otpController = TextEditingController();
     bool isOtpSent = false;
     final formKey = GlobalKey<FormState>();
+    CountryInfo selectedCountry = _countries[0]; // Default to Indonesia
 
     showDialog(
       context: context,
@@ -120,16 +121,51 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: InputDecoration(
-                          hintText: '081234567890',
-                          prefixText: '+62 ',
-                          prefixStyle: const TextStyle(fontWeight: FontWeight.bold),
+                          hintText: '81234567890',
+                          prefixIcon: InkWell(
+                            onTap: () {
+                              _showCountryPickerBottomSheet(
+                                context,
+                                (CountryInfo country) {
+                                  setState(() {
+                                    selectedCountry = country;
+                                  });
+                                },
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    selectedCountry.flag,
+                                    style: const TextStyle(fontSize: 18),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    selectedCountry.code,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF3F3D56)),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(Icons.arrow_drop_down_rounded, color: Colors.grey, size: 20),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    height: 20,
+                                    width: 1,
+                                    color: Colors.black12,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         validator: (val) {
                           if (val == null || val.isEmpty) {
                             return 'Nomor telepon tidak boleh kosong';
                           }
-                          if (val.length < 9) {
+                          if (val.length < 8) {
                             return 'Nomor telepon tidak valid';
                           }
                           return null;
@@ -662,4 +698,83 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+  void _showCountryPickerBottomSheet(BuildContext context, Function(CountryInfo) onSelected) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: SizedBox(
+                  width: 40,
+                  height: 4,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.all(Radius.circular(2)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Pilih Kode Negara',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _countries.length,
+                  itemBuilder: (context, index) {
+                    final country = _countries[index];
+                    return ListTile(
+                      leading: Text(country.flag, style: const TextStyle(fontSize: 24)),
+                      title: Text(country.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      trailing: Text(
+                        country.code,
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6C63FF)),
+                      ),
+                      onTap: () {
+                        onSelected(country);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
+
+class CountryInfo {
+  final String name;
+  final String code;
+  final String flag;
+
+  const CountryInfo({required this.name, required this.code, required this.flag});
+}
+
+const List<CountryInfo> _countries = [
+  CountryInfo(name: 'Indonesia', code: '+62', flag: '🇮🇩'),
+  CountryInfo(name: 'Malaysia', code: '+60', flag: '🇲🇾'),
+  CountryInfo(name: 'Singapore', code: '+65', flag: '🇸🇬'),
+  CountryInfo(name: 'United States', code: '+1', flag: '🇺🇸'),
+  CountryInfo(name: 'United Kingdom', code: '+44', flag: '🇬🇧'),
+  CountryInfo(name: 'Japan', code: '+81', flag: '🇯🇵'),
+  CountryInfo(name: 'Australia', code: '+61', flag: '🇦🇺'),
+  CountryInfo(name: 'Saudi Arabia', code: '+966', flag: '🇸🇦'),
+  CountryInfo(name: 'Thailand', code: '+66', flag: '🇹🇭'),
+  CountryInfo(name: 'Philippines', code: '+63', flag: '🇵🇭'),
+];

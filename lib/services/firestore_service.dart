@@ -19,63 +19,74 @@ class FirestoreService {
   final List<UserModel> _mockUsers = [];
   
   final List<SymptomModel> _mockSymptoms = [
-    SymptomModel(id: 's1', code: 'G001', name: 'Merasa mulut kering atau sering haus tanpa sebab fisik'),
-    SymptomModel(id: 's2', code: 'G002', name: 'Mengalami kesulitan bernapas (napas pendek/cepat)'),
-    SymptomModel(id: 's3', code: 'G003', name: 'Anggota tubuh gemetar (tangan/kaki) saat cemas'),
-    SymptomModel(id: 's4', code: 'G004', name: 'Khawatir berlebihan tentang situasi yang dapat membuat panik'),
-    SymptomModel(id: 's5', code: 'G005', name: 'Merasa sedih, muram, dan tertekan sepanjang hari'),
-    SymptomModel(id: 's6', code: 'G006', name: 'Merasa sangat sulit memulai aktivitas atau kehilangan minat'),
-    SymptomModel(id: 's7', code: 'G007', name: 'Merasa tidak ada masa depan yang baik (putus asa)'),
-    SymptomModel(id: 's8', code: 'G008', name: 'Merasa diri tidak berharga atau hidup terasa sia-sia'),
-    SymptomModel(id: 's9', code: 'G009', name: 'Merasa mudah marah, tersinggung, atau tidak sabar'),
-    SymptomModel(id: 's10', code: 'G010', name: 'Merasa sangat gelisah, cemas, dan sulit untuk duduk tenang'),
-    SymptomModel(id: 's11', code: 'G011', name: 'Merasa sulit untuk relaksasi atau mengendurkan ketegangan'),
-    SymptomModel(id: 's12', code: 'G012', name: 'Mudah terkejut atau merasa sangat sensitif terhadap suara bising'),
+    SymptomModel(id: 's1', code: 'G001', name: 'Sering merasa lelah setelah bekerja ringan'),
+    SymptomModel(id: 's2', code: 'G002', name: 'Mengalami ketegangan otot ringan di leher/bahu'),
+    SymptomModel(id: 's3', code: 'G003', name: 'Merasa sulit rileks sejenak setelah aktivitas harian'),
+    SymptomModel(id: 's4', code: 'G004', name: 'Mengalami sakit kepala atau pusing akibat beban pikiran'),
+    SymptomModel(id: 's5', code: 'G005', name: 'Kualitas tidur menurun atau sering terbangun di malam hari'),
+    SymptomModel(id: 's6', code: 'G006', name: 'Merasa tidak sabar atau mudah tersinggung karena hal sepele'),
+    SymptomModel(id: 's7', code: 'G007', name: 'Mengalami kesulitan bernapas atau dada sesak tanpa sebab fisik'),
+    SymptomModel(id: 's8', code: 'G008', name: 'Merasa sangat gelisah dan cemas berlebihan sepanjang waktu'),
+    SymptomModel(id: 's9', code: 'G009', name: 'Mengalami gangguan pencernaan atau mual akibat tekanan mental'),
+    SymptomModel(id: 's10', code: 'G010', name: 'Merasa sedih, hampa, dan putus asa terus-menerus sepanjang hari'),
+    SymptomModel(id: 's11', code: 'G011', name: 'Kehilangan minat total terhadap hobi atau aktivitas yang disukai'),
+    SymptomModel(id: 's12', code: 'G012', name: 'Merasa diri tidak berharga, bersalah, atau hidup terasa sia-sia'),
   ];
 
   final List<DiseaseModel> _mockDiseases = [
     DiseaseModel(
       id: 'd1',
       code: 'P001',
-      name: 'Gangguan Kecemasan (Anxiety)',
-      description: 'Gangguan kecemasan ditandai dengan kecemasan dan kekhawatiran yang berlebihan pada aktivitas atau peristiwa sehari-hari.',
+      name: 'Stress Ringan',
+      description: 'Kondisi di mana Anda mengalami tekanan emosional ringan. Hal ini wajar dan dapat diatasi secara mandiri dengan istirahat serta relaksasi.',
       solutions: [
-        'Lakukan latihan pernapasan dalam (Deep Breathing) secara teratur.',
-        'Batasi konsumsi kafein dan alkohol yang dapat memicu kecemasan.',
-        'Gunakan jurnal harian untuk mencurahkan pikiran cemas Anda.',
-        'Konsultasikan dengan psikolog jika kecemasan mengganggu aktivitas harian Anda.'
+        'Lakukan latihan relaksasi pernapasan (Box Breathing) 5-10 menit.',
+        'Tulis jurnal mood harian untuk meluapkan beban pikiran.',
+        'Istirahat tidur yang cukup (7-8 jam) dan minum air putih yang cukup.'
       ],
     ),
     DiseaseModel(
       id: 'd2',
       code: 'P002',
-      name: 'Gangguan Depresi (Depression)',
-      description: 'Depresi adalah gangguan suasana hati yang ditandai dengan perasaan sedih yang mendalam dan kehilangan minat terhadap hal-hal yang disukai.',
+      name: 'Stress Sedang',
+      description: 'Anda mengalami tekanan mental sedang yang mulai memengaruhi rutinitas harian Anda. Diperlukan pengelolaan stres yang lebih aktif secara mandiri.',
       solutions: [
-        'Cobalah berolahraga ringan minimal 15 menit sehari.',
-        'Bicarakan perasaan Anda kepada orang terdekat yang Anda percayai.',
-        'Cobalah buat jadwal harian kecil untuk menghindari kecenderungan mengurung diri.',
-        'Hubungi layanan kesehatan mental atau psikolog klinis untuk konseling.'
+        'Lakukan aktivitas hobi atau self-care yang menyenangkan diri.',
+        'Atur prioritas tugas agar tidak merasa kewalahan.',
+        'Lakukan olahraga ringan secara rutin (jalan kaki 15-20 menit).',
+        'Ceritakan beban pikiran Anda kepada teman atau keluarga terdekat.'
       ],
     ),
     DiseaseModel(
       id: 'd3',
       code: 'P003',
-      name: 'Gangguan Stres (Stress)',
-      description: 'Stres adalah reaksi tubuh terhadap situasi yang tampak sulit atau berbahaya. Stres berkepanjangan dapat merusak kesehatan fisik dan mental.',
+      name: 'Stress Berat',
+      description: 'Tekanan mental yang Anda rasakan berada pada tingkat berat dan berisiko mengganggu kesehatan fisik serta mental Anda. Kondisi ini disarankan untuk tidak ditangani secara mandiri saja.',
       solutions: [
-        'Praktikkan meditasi mindfulness atau latihan relaksasi otot progresif.',
-        'Luangkan waktu untuk hobi atau hal yang menyenangkan diri sendiri (self-care).',
-        'Atur skala prioritas pekerjaan untuk mengurangi beban pikiran.',
-        'Istirahat tidur yang cukup (7-8 jam per hari).'
+        'Segera konsultasikan kondisi Anda kepada Psikolog atau Psikiater profesional.',
+        'Batasi paparan terhadap pemicu stres utama (pekerjaan/berita berlebih).',
+        'Hubungi hotline layanan kesehatan mental darurat jika merasa kewalahan.'
+      ],
+    ),
+    DiseaseModel(
+      id: 'd4',
+      code: 'P004',
+      name: 'Depresi',
+      description: 'Anda menunjukkan indikasi gangguan suasana hati yang mendalam (depresi). Kondisi ini memerlukan diagnosis klinis dan penanganan medis oleh tenaga profesional.',
+      solutions: [
+        'Sangat disarankan segera berkonsultasi dengan Psikolog klinis atau Psikiater.',
+        'Jangan mendiagnosis diri sendiri atau mengisolasi diri dari orang terdekat.',
+        'Jaga komunikasi aktif dengan keluarga atau orang yang Anda percayai.',
+        'Ikuti terapi perilaku kognitif (CBT) di bawah bimbingan pakar.'
       ],
     ),
   ];
 
   final List<RuleModel> _mockRules = [
-    RuleModel(id: 'r1', code: 'R001', gejalaRequired: ['G001', 'G002', 'G003', 'G004'], hasilGangguan: 'P001'),
-    RuleModel(id: 'r2', code: 'R002', gejalaRequired: ['G005', 'G006', 'G007', 'G008'], hasilGangguan: 'P002'),
-    RuleModel(id: 'r3', code: 'R003', gejalaRequired: ['G009', 'G010', 'G011', 'G012'], hasilGangguan: 'P003'),
+    RuleModel(id: 'r1', code: 'R001', gejalaRequired: ['G001', 'G002', 'G003'], hasilGangguan: 'P001'),
+    RuleModel(id: 'r2', code: 'R002', gejalaRequired: ['G004', 'G005', 'G006'], hasilGangguan: 'P002'),
+    RuleModel(id: 'r3', code: 'R003', gejalaRequired: ['G007', 'G008', 'G009'], hasilGangguan: 'P003'),
+    RuleModel(id: 'r4', code: 'R004', gejalaRequired: ['G010', 'G011', 'G012'], hasilGangguan: 'P004'),
   ];
 
   final List<HistoryModel> _mockHistory = [];

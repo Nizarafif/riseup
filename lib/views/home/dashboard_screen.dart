@@ -27,10 +27,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Provider.of<AuthProvider>(context, listen: false).user;
       if (user != null) {
-        Provider.of<DiagnosticProvider>(context, listen: false).loadDiagnosticData(user.uid);
+        Provider.of<DiagnosticProvider>(context, listen: false)
+            .loadDiagnosticData(user.uid)
+            .then((_) {
+          if (mounted) {
+            _checkFirstTimeUser();
+          }
+        });
         Provider.of<MoodProvider>(context, listen: false).fetchMoods(user.uid);
       }
     });
+  }
+
+  void _checkFirstTimeUser() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    if (user != null && user.role == 'user' && diagnosticProvider.historyList.isEmpty) {
+      _showWelcomeTestDialog();
+    }
+  }
+
+  void _showWelcomeTestDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6C63FF),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Selamat Datang!',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Untuk dapat mendeteksi awal dan memantau kondisi kesehatan mental Anda secara mandiri dengan optimal, sistem pakar kami membutuhkan data analisis awal.\n\nSilakan isi tes kuesioner singkat terlebih dahulu.',
+            style: TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF505050)),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Provider.of<DiagnosticProvider>(context, listen: false).resetScreening();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ScreeningScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6C63FF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              ),
+              child: const Text(
+                'Mulai Tes Sekarang',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
