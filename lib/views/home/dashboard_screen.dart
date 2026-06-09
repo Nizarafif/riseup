@@ -8,6 +8,7 @@ import '../auth/login_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../screening/screening_screen.dart';
 import '../monitoring/monitoring_screen.dart';
+import '../../widgets/mood_theme_helper.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -149,6 +150,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final user = authProvider.user;
+    
+    final paletteIdx = authProvider.selectedPaletteIndex;
+    final emojiThemeIdx = authProvider.selectedEmojiThemeIndex;
 
     if (user == null) return const LoginScreen();
 
@@ -334,11 +338,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildMoodEmoji(1, '😢', 'Sangat Buruk'),
-                              _buildMoodEmoji(2, '🙁', 'Buruk'),
-                              _buildMoodEmoji(3, '😐', 'Normal'),
-                              _buildMoodEmoji(4, '🙂', 'Baik'),
-                              _buildMoodEmoji(5, '😄', 'Sangat Baik'),
+                              _buildMoodEmoji(1, 'Sangat Buruk', paletteIdx, emojiThemeIdx),
+                              _buildMoodEmoji(2, 'Buruk', paletteIdx, emojiThemeIdx),
+                              _buildMoodEmoji(3, 'Normal', paletteIdx, emojiThemeIdx),
+                              _buildMoodEmoji(4, 'Baik', paletteIdx, emojiThemeIdx),
+                              _buildMoodEmoji(5, 'Sangat Baik', paletteIdx, emojiThemeIdx),
                             ],
                           ),
                           if (_selectedMoodLevel > 0) ...[
@@ -565,8 +569,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMoodEmoji(int level, String emoji, String label) {
+  Widget _buildMoodEmoji(int level, String label, int paletteIndex, int emojiThemeIndex) {
     bool isSelected = _selectedMoodLevel == level;
+    final themeColor = MoodThemeHelper.getMoodColor(paletteIndex, level);
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -575,29 +581,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       child: Column(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF6C63FF).withOpacity(0.15) : Colors.transparent,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
-                width: 2,
-              ),
-            ),
-            child: Text(
-              emoji,
-              style: TextStyle(fontSize: isSelected ? 32 : 26),
-            ),
+          MoodEmojiWidget(
+            level: level,
+            size: isSelected ? 48 : 38,
+            paletteIndex: paletteIndex,
+            emojiThemeIndex: emojiThemeIndex,
+            isSelected: isSelected,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? const Color(0xFF6C63FF) : Colors.black45,
+              color: isSelected ? themeColor : Colors.black45,
             ),
           )
         ],

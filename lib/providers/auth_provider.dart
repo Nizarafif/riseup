@@ -11,11 +11,21 @@ class AuthProvider extends ChangeNotifier {
   UserModel? _user;
   String _errorMessage = '';
   bool _onboardingCompleted = false;
+  bool _privacyAccepted = false;
+  bool _paletteSetupCompleted = false;
+  int _selectedPaletteIndex = 0;
+  int _selectedEmojiThemeIndex = 0;
+  int _selectedBackgroundThemeIndex = 0;
 
   AuthStatus get status => _status;
   UserModel? get user => _user;
   String get errorMessage => _errorMessage;
   bool get onboardingCompleted => _onboardingCompleted;
+  bool get privacyAccepted => _privacyAccepted;
+  bool get paletteSetupCompleted => _paletteSetupCompleted;
+  int get selectedPaletteIndex => _selectedPaletteIndex;
+  int get selectedEmojiThemeIndex => _selectedEmojiThemeIndex;
+  int get selectedBackgroundThemeIndex => _selectedBackgroundThemeIndex;
 
   void completeOnboarding() {
     _onboardingCompleted = true;
@@ -24,6 +34,37 @@ class AuthProvider extends ChangeNotifier {
 
   void resetOnboarding() {
     _onboardingCompleted = false;
+    notifyListeners();
+  }
+
+  void acceptPrivacy() {
+    _privacyAccepted = true;
+    notifyListeners();
+  }
+
+  void rejectPrivacy() {
+    _privacyAccepted = false;
+    _onboardingCompleted = false;
+    notifyListeners();
+  }
+
+  void completePaletteSetup(int paletteIndex, int emojiThemeIndex, int backgroundThemeIndex) {
+    _selectedPaletteIndex = paletteIndex;
+    _selectedEmojiThemeIndex = emojiThemeIndex;
+    _selectedBackgroundThemeIndex = backgroundThemeIndex;
+    _paletteSetupCompleted = true;
+    notifyListeners();
+  }
+
+  void updateBackgroundTheme(int index) {
+    _selectedBackgroundThemeIndex = index;
+    notifyListeners();
+  }
+
+  void resetPaletteSetup() {
+    _paletteSetupCompleted = false;
+    _privacyAccepted = false;
+    _selectedBackgroundThemeIndex = 0;
     notifyListeners();
   }
 

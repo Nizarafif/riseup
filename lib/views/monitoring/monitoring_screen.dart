@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/diagnostic_provider.dart';
+import '../../widgets/mood_theme_helper.dart';
 
 class MonitoringScreen extends StatefulWidget {
   const MonitoringScreen({super.key});
@@ -77,6 +78,11 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
   Widget _buildMoodChartTab() {
     final moodProvider = Provider.of<MoodProvider>(context);
     final moods = moodProvider.moods;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final paletteIdx = authProvider.selectedPaletteIndex;
+    final emojiThemeIdx = authProvider.selectedEmojiThemeIndex;
+    final colorMid = MoodThemeHelper.getMoodColor(paletteIdx, 3);
+    final colorMax = MoodThemeHelper.getMoodColor(paletteIdx, 5);
 
     if (moodProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -165,28 +171,19 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                       interval: 1,
                       reservedSize: 42,
                       getTitlesWidget: (value, meta) {
-                        String label = '';
-                        switch (value.toInt()) {
-                          case 1:
-                            label = '😢';
-                            break;
-                          case 2:
-                            label = '🙁';
-                            break;
-                          case 3:
-                            label = '😐';
-                            break;
-                          case 4:
-                            label = '🙂';
-                            break;
-                          case 5:
-                            label = '😄';
-                            break;
+                        final val = value.toInt();
+                        if (val >= 1 && val <= 5) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: MoodEmojiWidget(
+                              level: val,
+                              size: 20,
+                              paletteIndex: paletteIdx,
+                              emojiThemeIndex: emojiThemeIdx,
+                            ),
+                          );
                         }
-                        return Text(
-                          label,
-                          style: const TextStyle(fontSize: 16),
-                        );
+                        return const SizedBox.shrink();
                       },
                     ),
                   ),
@@ -200,8 +197,8 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF00C9A7)],
+                    gradient: LinearGradient(
+                      colors: [colorMid, colorMax],
                     ),
                     barWidth: 4,
                     isStrokeCapRound: true,
@@ -210,8 +207,8 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF6C63FF).withOpacity(0.2),
-                          const Color(0xFF00C9A7).withOpacity(0.0),
+                          colorMid.withOpacity(0.25),
+                          colorMax.withOpacity(0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -237,37 +234,8 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
             itemBuilder: (context, index) {
               // Show latest first
               final mood = moods[moods.length - 1 - index];
-              String moodString = '';
-              String moodEmoji = '';
-              Color moodColor = Colors.grey;
-
-              switch (mood.moodLevel) {
-                case 1:
-                  moodString = 'Sangat Buruk';
-                  moodEmoji = '😢';
-                  moodColor = Colors.red;
-                  break;
-                case 2:
-                  moodString = 'Buruk';
-                  moodEmoji = '🙁';
-                  moodColor = Colors.orange;
-                  break;
-                case 3:
-                  moodString = 'Normal';
-                  moodEmoji = '😐';
-                  moodColor = Colors.blue;
-                  break;
-                case 4:
-                  moodString = 'Baik';
-                  moodEmoji = '🙂';
-                  moodColor = Colors.teal;
-                  break;
-                case 5:
-                  moodString = 'Sangat Baik';
-                  moodEmoji = '😄';
-                  moodColor = Colors.green;
-                  break;
-              }
+              final moodString = MoodThemeHelper.getMoodName(mood.moodLevel);
+              final moodColor = MoodThemeHelper.getMoodColor(paletteIdx, mood.moodLevel);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -281,7 +249,12 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                 ),
                 child: Row(
                   children: [
-                    Text(moodEmoji, style: const TextStyle(fontSize: 28)),
+                    MoodEmojiWidget(
+                      level: mood.moodLevel,
+                      size: 38,
+                      paletteIndex: paletteIdx,
+                      emojiThemeIndex: emojiThemeIdx,
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(

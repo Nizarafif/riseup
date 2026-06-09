@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import '../../../providers/auth_provider.dart';
 
 class DoodleBackground extends StatefulWidget {
   final Widget child;
@@ -17,7 +19,7 @@ class _DoodleBackgroundState extends State<DoodleBackground>
   @override
   void initState() {
     super.initState();
-    // Animasi kontinu lambat yang sangat menenangkan untuk halaman login/register
+    // Animasi kontinu lambat yang sangat menenangkan
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 12),
@@ -32,28 +34,27 @@ class _DoodleBackgroundState extends State<DoodleBackground>
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final themeIndex = authProvider.selectedBackgroundThemeIndex;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Stack(
           children: [
-            // Base Calm Gradient
+            // Base Calm Gradient berdasarkan tipe tema
             Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFE8F0FE), // Biru pastel tenang
-                    Color(0xFFFDF2F8), // Pink ceria pastel lembut
-                  ],
-                ),
+              decoration: BoxDecoration(
+                gradient: _getGradient(themeIndex),
               ),
             ),
-            // Programmatic Hand-Drawn Doodles Ber-animasi
+            // Custom Painter Dinamis
             Positioned.fill(
               child: CustomPaint(
-                painter: DoodlePainter(animationValue: _controller.value),
+                painter: DoodlePainter(
+                  animationValue: _controller.value,
+                  themeIndex: themeIndex,
+                ),
               ),
             ),
             // Content overlay
@@ -63,15 +64,60 @@ class _DoodleBackgroundState extends State<DoodleBackground>
       },
     );
   }
+
+  LinearGradient _getGradient(int themeIndex) {
+    if (themeIndex == 1) {
+      // Liquid Blobs: Mint Green to Cool Gray/Blue
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFFE8F5E9),
+          Color(0xFFECEFF1),
+        ],
+      );
+    } else if (themeIndex == 2) {
+      // Starry Night: Deep Indigo to Midnight Purple
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF16162D),
+          Color(0xFF090715),
+        ],
+      );
+    } else {
+      // Classic Doodle: Biru pastel ke Pink pastel
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFFE8F0FE),
+          Color(0xFFFDF2F8),
+        ],
+      );
+    }
+  }
 }
 
 class DoodlePainter extends CustomPainter {
   final double animationValue;
+  final int themeIndex;
 
-  DoodlePainter({required this.animationValue});
+  DoodlePainter({required this.animationValue, required this.themeIndex});
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (themeIndex == 1) {
+      _paintLiquidBlobs(canvas, size);
+    } else if (themeIndex == 2) {
+      _paintStarryNight(canvas, size);
+    } else {
+      _paintClassicDoodle(canvas, size);
+    }
+  }
+
+  void _paintClassicDoodle(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
@@ -131,22 +177,178 @@ class DoodlePainter extends CustomPainter {
     _drawHeart(canvas, const Offset(320, 270), 10, const Color(0xFFFECDD3), loopVal, 3); // Soft Rose
   }
 
+  void _paintLiquidBlobs(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    final loopVal = animationValue * 2 * math.pi;
+
+    // Blob 1: Soft Purple (Top Left)
+    final blob1Center = Offset(
+      size.width * 0.15 + math.sin(loopVal * 0.5) * 35.0,
+      size.height * 0.25 + math.cos(loopVal * 0.4) * 40.0,
+    );
+    paint.color = const Color(0xFFE9D5FF).withOpacity(0.42);
+    canvas.drawCircle(blob1Center, 135, paint);
+
+    // Blob 2: Soft Sky Blue (Bottom Right)
+    final blob2Center = Offset(
+      size.width * 0.85 + math.cos(loopVal * 0.4) * 40.0,
+      size.height * 0.70 + math.sin(loopVal * 0.5) * 30.0,
+    );
+    paint.color = const Color(0xFFBAE6FD).withOpacity(0.45);
+    canvas.drawCircle(blob2Center, 160, paint);
+
+    // Blob 3: Soft Mint Green (Center Left)
+    final blob3Center = Offset(
+      size.width * 0.30 + math.cos(loopVal * 0.3) * 25.0,
+      size.height * 0.75 + math.sin(loopVal * 0.4) * 35.0,
+    );
+    paint.color = const Color(0xFFA7F3D0).withOpacity(0.38);
+    canvas.drawCircle(blob3Center, 140, paint);
+
+    // Blob 4: Soft Pink (Top Right)
+    final blob4Center = Offset(
+      size.width * 0.80 + math.sin(loopVal * 0.4) * 30.0,
+      size.height * 0.15 + math.cos(loopVal * 0.3) * 25.0,
+    );
+    paint.color = const Color(0xFFFDE2E4).withOpacity(0.40);
+    canvas.drawCircle(blob4Center, 115, paint);
+    
+    // Wave gembul menenangkan di bagian bawah
+    final wavePath = Path()
+      ..moveTo(0, size.height * 0.95 + math.sin(loopVal) * 6)
+      ..quadraticBezierTo(
+        size.width * 0.3, size.height * 0.92 + math.cos(loopVal) * 8,
+        size.width * 0.6, size.height * 0.96 + math.sin(loopVal) * 7,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.85, size.height * 0.93 + math.cos(loopVal) * 5,
+        size.width, size.height * 0.95 + math.sin(loopVal) * 4,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    paint.color = const Color(0xFFF1F5F9).withOpacity(0.5);
+    canvas.drawPath(wavePath, paint);
+  }
+
+  void _paintStarryNight(Canvas canvas, Size size) {
+    final loopVal = animationValue * 2 * math.pi;
+
+    // 1. Rasi Bintang (Fine Lines)
+    final linePaint = Paint()
+      ..color = Colors.white.withOpacity(0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    
+    canvas.drawLine(const Offset(60, 150), const Offset(120, 180), linePaint);
+    canvas.drawLine(const Offset(120, 180), const Offset(90, 240), linePaint);
+    canvas.drawLine(const Offset(90, 240), const Offset(160, 220), linePaint);
+
+    canvas.drawLine(const Offset(280, 320), const Offset(310, 390), linePaint);
+    canvas.drawLine(const Offset(310, 390), const Offset(250, 420), linePaint);
+
+    // 2. Bulan Sabit Tersenyum Imut (Crescent Moon)
+    _drawCrescentMoon(canvas, Offset(size.width * 0.78, 120), 26, loopVal);
+
+    // 3. Bintang Twinkling Emas
+    _drawStar(canvas, const Offset(60, 150), 6, const Color(0xFFFDE047), loopVal, 0);
+    _drawStar(canvas, const Offset(120, 180), 5, const Color(0xFFFEF08A), loopVal, 1);
+    _drawStar(canvas, const Offset(90, 240), 7, const Color(0xFFFDE047), loopVal, 2);
+    _drawStar(canvas, const Offset(160, 220), 5, const Color(0xFFFEF08A), loopVal, 3);
+    
+    _drawStar(canvas, const Offset(280, 320), 6, const Color(0xFFFDE047), loopVal, 4);
+    _drawStar(canvas, const Offset(310, 390), 8, const Color(0xFFFEF08A), loopVal, 5);
+    _drawStar(canvas, const Offset(250, 420), 5, const Color(0xFFFDE047), loopVal, 6);
+
+    _drawStar(canvas, const Offset(70, 500), 7, const Color(0xFFFDE047), loopVal, 7);
+    _drawStar(canvas, const Offset(310, 540), 6, const Color(0xFFFEF08A), loopVal, 8);
+    _drawStar(canvas, const Offset(180, 620), 5, const Color(0xFFFDE047), loopVal, 9);
+
+    // 4. Bintang Jatuh (Shooting Star)
+    final double shootProgress = (animationValue * 3) % 1.0;
+    if (shootProgress < 0.25) {
+      final double progress = shootProgress / 0.25;
+      final startX = size.width * 0.8;
+      final startY = size.height * 0.15;
+      final currentX = startX - progress * 150.0;
+      final currentY = startY + progress * 90.0;
+      
+      final shootPaint = Paint()
+        ..shader = LinearGradient(
+          colors: [Colors.white.withOpacity(0.8), Colors.white.withOpacity(0.0)],
+        ).createShader(Rect.fromPoints(Offset(currentX, currentY), Offset(currentX + 50, currentY - 30)))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+      
+      canvas.drawLine(
+        Offset(currentX, currentY),
+        Offset(currentX + 40, currentY - 24),
+        shootPaint,
+      );
+    }
+  }
+
+  void _drawCrescentMoon(Canvas canvas, Offset center, double radius, double loopVal) {
+    final pulseRadius = radius * (1.0 + 0.03 * math.sin(loopVal * 1.5));
+    final paint = Paint()
+      ..color = const Color(0xFFFEF08A).withOpacity(0.20)
+      ..style = PaintingStyle.fill;
+    
+    // Moon glow
+    canvas.drawCircle(center, pulseRadius * 1.3, paint);
+
+    // Moon body
+    final Path moonPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: pulseRadius));
+    final Path shadowPath = Path()
+      ..addOval(Rect.fromCircle(center: Offset(center.dx - pulseRadius * 0.45, center.dy - pulseRadius * 0.2), radius: pulseRadius * 0.95));
+    
+    final Path crescentPath = Path.combine(PathOperation.difference, moonPath, shadowPath);
+    paint.color = const Color(0xFFFDE047);
+    canvas.drawPath(crescentPath, paint);
+
+    // Cute face
+    final facePaint = Paint()
+      ..color = const Color(0xFF4A4A4A).withOpacity(0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    final Offset eyeOffset = Offset(center.dx + pulseRadius * 0.22, center.dy - pulseRadius * 0.12);
+    canvas.drawArc(
+      Rect.fromCircle(center: eyeOffset, radius: 2.2),
+      math.pi,
+      math.pi,
+      false,
+      facePaint,
+    );
+
+    final Offset mouthOffset = Offset(center.dx + pulseRadius * 0.3, center.dy + pulseRadius * 0.05);
+    canvas.drawArc(
+      Rect.fromCircle(center: mouthOffset, radius: 2.8),
+      0,
+      math.pi,
+      false,
+      facePaint,
+    );
+  }
+
   void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
     paint.color = Colors.white.withOpacity(0.85);
-    
-    // 3 overlapping circles
     canvas.drawCircle(center, radius, paint);
     canvas.drawCircle(Offset(center.dx - radius * 0.6, center.dy + radius * 0.1), radius * 0.75, paint);
     canvas.drawCircle(Offset(center.dx + radius * 0.6, center.dy + radius * 0.1), radius * 0.75, paint);
 
-    // Drawing facial expressions
     final linePaint = Paint()
       ..color = const Color(0xFF4A4A4A).withOpacity(0.6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
 
-    // Eyes (sleeping/curved arcs)
     canvas.drawArc(
       Rect.fromCircle(center: Offset(center.dx - radius * 0.25, center.dy - radius * 0.05), radius: 3.5),
       math.pi, math.pi, false, linePaint,
@@ -156,13 +358,11 @@ class DoodlePainter extends CustomPainter {
       math.pi, math.pi, false, linePaint,
     );
     
-    // Happy Smiling Mouth
     canvas.drawArc(
       Rect.fromCircle(center: Offset(center.dx, center.dy + radius * 0.15), radius: 4.5),
       0, math.pi, false, linePaint,
     );
 
-    // Cute pink cheeks
     final cheekPaint = Paint()
       ..color = const Color(0xFFFDA4AF).withOpacity(0.5)
       ..style = PaintingStyle.fill;
@@ -172,15 +372,12 @@ class DoodlePainter extends CustomPainter {
 
   void _drawSun(Canvas canvas, Offset center, double radius, Paint paint, double loopVal) {
     final pulseRadius = radius * (1.0 + 0.04 * math.sin(loopVal * 1.5));
-    // Glow ring
     paint.color = const Color(0xFFFEF08A).withOpacity(0.35 + 0.1 * math.sin(loopVal));
     canvas.drawCircle(center, pulseRadius * 1.35, paint);
 
-    // Sun core
     paint.color = const Color(0xFFFACC15);
     canvas.drawCircle(center, pulseRadius, paint);
 
-    // Drawing cute sun eyes & smile
     final linePaint = Paint()
       ..color = const Color(0xFF4A4A4A).withOpacity(0.7)
       ..style = PaintingStyle.stroke
@@ -194,7 +391,6 @@ class DoodlePainter extends CustomPainter {
       0, math.pi, false, linePaint,
     );
 
-    // Ray lines (rotating slowly)
     final rayPaint = Paint()
       ..color = const Color(0xFFFACC15).withOpacity(0.9)
       ..strokeWidth = 2.2
@@ -260,6 +456,7 @@ class DoodlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DoodlePainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
+    return oldDelegate.animationValue != animationValue ||
+        oldDelegate.themeIndex != themeIndex;
   }
 }

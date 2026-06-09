@@ -6,6 +6,8 @@ import 'providers/mood_provider.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/dashboard_screen.dart';
 import 'views/onboarding/onboarding_screen.dart';
+import 'views/onboarding/privacy_screen.dart';
+import 'views/onboarding/palette_setup_screen.dart';
 
 void main() async {
   // Pastikan binding Flutter terinisialisasi sebelum memanggil layanan async
@@ -78,6 +80,10 @@ class AuthWrapper extends StatelessWidget {
       case AuthStatus.error:
         if (!authProvider.onboardingCompleted) {
           return const OnboardingScreen();
+        } else if (!authProvider.privacyAccepted) {
+          return const PrivacyScreen();
+        } else if (!authProvider.paletteSetupCompleted) {
+          return const PaletteSetupScreen();
         } else {
           return const LoginScreen();
         }
