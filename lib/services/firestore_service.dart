@@ -108,6 +108,9 @@ class FirestoreService {
 
   void setUseMock(bool value) {
     _useMock = value;
+    if (!value && _db == null) {
+      _db = FirebaseFirestore.instance;
+    }
   }
 
   // --- Users CRUD ---

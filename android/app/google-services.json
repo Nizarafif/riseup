@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "577024698209",
+    "project_id": "riseup-flutter",
+    "storage_bucket": "riseup-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577024698209:android:718f280a3c72abdbb1c720",
+        "android_client_info": {
+          "package_name": "com.riseup.riseup"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "577024698209-4nnlniqmgf2q9qat3us33t7g1tiklb4l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.riseup.riseup",
+            "certificate_hash": "55b55882f352168d868793ddbdcb5cbc8dfa57ce"
+          }
+        },
+        {
+          "client_id": "577024698209-brjl8al6quvgcchdhacp1g3fj7bltc40.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgTN3MPuKIpM3XedW5JM69cFqFV_3CbKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "577024698209-brjl8al6quvgcchdhacp1g3fj7bltc40.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

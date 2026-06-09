@@ -48,33 +48,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Demo Shortcut: Social Logins map to specific demo roles
-  void _socialLogin(String platform, String email) async {
+  Future<void> _signInWithGoogle() async {
     setState(() {
       _isSocialLoading = true;
-      _socialPlatform = platform;
+      _socialPlatform = 'Google';
     });
 
-    // Simulate social SDK verification delay
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.signIn(email, 'password');
+    final success = await authProvider.signInWithGoogle();
 
     if (!mounted) return;
     setState(() {
       _isSocialLoading = false;
     });
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Berhasil masuk via $platform sebagai ${_socialPlatform == 'Google' ? 'User' : 'Pakar'}!'),
-          backgroundColor: const Color(0xFF00C9A7),
-        ),
-      );
-    } else {
+    if (!success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage),
@@ -82,6 +70,32 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
+  }
+
+  void _socialLogin(String platform) async {
+    if (platform == 'Google') {
+      await _signInWithGoogle();
+      return;
+    }
+
+    setState(() {
+      _isSocialLoading = true;
+      _socialPlatform = platform;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    if (!mounted) return;
+    setState(() {
+      _isSocialLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Masuk dengan $platform belum diaktifkan.'),
+        backgroundColor: Colors.orange,
+      ),
+    );
   }
 
   void _showPhoneLoginDialog() {
@@ -222,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     } else {
                       Navigator.pop(context);
-                      _socialLogin('No. Telepon', 'user@riseup.com');
+                      _socialLogin('No. Telepon');
                     }
                   },
                   child: Text(isOtpSent ? 'Verifikasi' : 'Kirim OTP'),
@@ -468,15 +482,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               labelText: 'Password',
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                  color: Colors.grey,
-                                  size: 20,
+                              suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
+                              suffixIcon: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    color: const Color(0xFF6C63FF),
+                                    size: 22,
+                                  ),
+                                  tooltip: _obscureText ? 'Tampilkan password' : 'Sembunyikan password',
+                                  onPressed: () {
+                                    setState(() => _obscureText = !_obscureText);
+                                  },
                                 ),
-                                onPressed: () {
-                                  setState(() => _obscureText = !_obscureText);
-                                },
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
@@ -604,7 +623,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
-                                        : () => _socialLogin('Google', 'user@riseup.com'),
+                                        : () => _socialLogin('Google'),
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Colors.black12, width: 1.5),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

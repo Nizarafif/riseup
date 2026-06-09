@@ -1,15 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 import 'firestore_service.dart';
 
 class AuthService {
+  static const Duration _profileOperationTimeout = Duration(seconds: 8);
+
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   AuthService._internal();
 
   FirebaseAuth? _auth;
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _googleSignInInitialized = false;
   bool _useMock = true; // Default ke true, disesuaikan di initialize()
 
   // Sesi Pengguna untuk Mode Simulasi (Mock)
@@ -37,13 +42,24 @@ class AuthService {
 
   Future<void> initialize() async {
     try {
-      // Inisialisasi Firebase Auth jika library siap
-      await Firebase.initializeApp().timeout(const Duration(seconds: 2));
+      if (Firebase.apps.isEmpty) {
+        throw Exception('Firebase belum diinisialisasi di main.dart.');
+      }
+
       _auth = FirebaseAuth.instance;
+      await _initializeGoogleSignIn();
+      await FirestoreService().initialize();
       _useMock = false;
       debugPrint("Firebase Auth berhasil diinisialisasi.");
+
+      final firebaseUser = _auth!.currentUser;
+      if (firebaseUser != null) {
+        _mockCurrentUser = await _ensureUserProfile(firebaseUser);
+      } else {
+        _mockCurrentUser = null;
+      }
     } catch (e) {
-      debugPrint("Firebase Auth gagal diinisialisasi, beralih ke Mock Mode.");
+      debugPrint("Firebase Auth gagal diinisialisasi, beralih ke Mock Mode. Error: $e");
       _useMock = true;
     }
     FirestoreService().setUseMock(_useMock);
@@ -67,26 +83,49 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
-      
-      // Ambil detail profil pengguna dari Firestore
-      final userDoc = await FirestoreService().getUserProfile(credential.user!.uid);
-      if (userDoc != null) {
-        _mockCurrentUser = userDoc;
-        return userDoc;
-      } else {
-        // Jika belum ada di database, buat data profil dasar
-        final newUser = UserModel(
-          uid: credential.user!.uid,
-          email: credential.user!.email ?? email,
-          name: email.split('@').first,
-          role: 'user',
-          createdAt: DateTime.now(),
-        );
-        await FirestoreService().createUserProfile(newUser);
-        _mockCurrentUser = newUser;
-        return newUser;
+      final firebaseUser = credential.user ?? _auth!.currentUser;
+      if (firebaseUser == null) {
+        throw Exception('Login berhasil, tetapi data pengguna Firebase tidak ditemukan.');
       }
+
+      final appUser = await _ensureUserProfile(firebaseUser);
+      _mockCurrentUser = appUser;
+      return appUser;
     }
+  }
+
+  Future<UserModel> signInWithGoogle() async {
+    if (_useMock) {
+      throw Exception('Google Sign-In tidak tersedia saat mode mock aktif.');
+    }
+
+    UserCredential credential;
+    if (kIsWeb) {
+      final googleProvider = GoogleAuthProvider()
+        ..setCustomParameters({'prompt': 'select_account'});
+      credential = await _auth!.signInWithPopup(googleProvider);
+    } else {
+      await _initializeGoogleSignIn();
+      final googleUser = await _googleSignIn.authenticate();
+      final googleAuth = googleUser.authentication;
+      if (googleAuth.idToken == null) {
+        throw Exception('Google tidak mengembalikan token login.');
+      }
+
+      final googleCredential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+      credential = await _auth!.signInWithCredential(googleCredential);
+    }
+
+    final firebaseUser = credential.user ?? _auth!.currentUser;
+    if (firebaseUser == null) {
+      throw Exception('Login Google berhasil, tetapi data pengguna Firebase tidak ditemukan.');
+    }
+
+    final appUser = await _ensureUserProfile(firebaseUser);
+    _mockCurrentUser = appUser;
+    return appUser;
   }
 
   // Registrasi
@@ -111,14 +150,20 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
+      final firebaseUser = credential.user ?? _auth!.currentUser;
+      if (firebaseUser == null) {
+        throw Exception('Registrasi berhasil, tetapi data pengguna Firebase tidak ditemukan.');
+      }
+
       final newUser = UserModel(
-        uid: credential.user!.uid,
+        uid: firebaseUser.uid,
         email: email.trim(),
         name: name.trim(),
         role: role,
         createdAt: DateTime.now(),
       );
-      await FirestoreService().createUserProfile(newUser);
+      await _saveUserProfile(newUser);
+      await firebaseUser.updateDisplayName(name.trim());
       _mockCurrentUser = newUser;
       return newUser;
     }
@@ -129,6 +174,13 @@ class AuthService {
     if (_useMock) {
       _mockCurrentUser = null;
     } else {
+      if (!kIsWeb && _googleSignInInitialized) {
+        try {
+          await _googleSignIn.signOut();
+        } catch (e) {
+          debugPrint('Google Sign-In local signOut gagal: $e');
+        }
+      }
       await _auth?.signOut();
       _mockCurrentUser = null;
     }
@@ -146,5 +198,60 @@ class AuthService {
       await _auth!.sendPasswordResetEmail(email: email.trim());
     }
   }
-}
 
+  Future<UserModel> _ensureUserProfile(User firebaseUser) async {
+    final userDoc = await _loadUserProfile(firebaseUser.uid);
+    if (userDoc != null) {
+      return userDoc;
+    }
+
+    final newUser = UserModel(
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      name: firebaseUser.displayName?.trim().isNotEmpty == true
+          ? firebaseUser.displayName!.trim()
+          : _fallbackNameFromEmail(firebaseUser.email),
+      role: 'user',
+      createdAt: DateTime.now(),
+    );
+    await _saveUserProfile(newUser);
+    return newUser;
+  }
+
+  Future<UserModel?> _loadUserProfile(String uid) async {
+    try {
+      return await FirestoreService()
+          .getUserProfile(uid)
+          .timeout(_profileOperationTimeout);
+    } catch (e) {
+      debugPrint('Gagal mengambil profil user dari Firestore: $e');
+      return null;
+    }
+  }
+
+  Future<void> _saveUserProfile(UserModel user) async {
+    try {
+      await FirestoreService()
+          .createUserProfile(user)
+          .timeout(_profileOperationTimeout);
+    } catch (e) {
+      debugPrint('Gagal menyimpan profil user ke Firestore: $e');
+    }
+  }
+
+  Future<void> _initializeGoogleSignIn() async {
+    if (kIsWeb || _googleSignInInitialized) {
+      return;
+    }
+
+    await _googleSignIn.initialize();
+    _googleSignInInitialized = true;
+  }
+
+  String _fallbackNameFromEmail(String? email) {
+    if (email == null || !email.contains('@')) {
+      return 'Pengguna RiseUp';
+    }
+    return email.split('@').first;
+  }
+}

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/diagnostic_provider.dart';
 import 'providers/mood_provider.dart';
@@ -8,9 +10,10 @@ import 'views/home/dashboard_screen.dart';
 import 'views/onboarding/onboarding_screen.dart';
 
 void main() async {
-  // Pastikan binding Flutter terinisialisasi sebelum memanggil layanan async
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -37,12 +40,12 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6C63FF), // Calming Deep Indigo
+            seedColor: const Color(0xFF6C63FF),
             primary: const Color(0xFF6C63FF),
             secondary: const Color(0xFF00C9A7),
             background: const Color(0xFFF8F9FD),
           ),
-          fontFamily: 'Roboto', // Default fallback font
+          fontFamily: 'Roboto',
           appBarTheme: const AppBarTheme(
             elevation: 0,
             iconTheme: IconThemeData(color: Color(0xFF3F3D56)),
@@ -65,7 +68,6 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-
     switch (authProvider.status) {
       case AuthStatus.uninitialized:
         return const Scaffold(
