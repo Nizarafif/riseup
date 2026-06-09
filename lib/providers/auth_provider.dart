@@ -192,6 +192,12 @@ class AuthProvider extends ChangeNotifier {
       if (message.contains('popup_closed_by_user')) {
         return 'Login Google dibatalkan sebelum selesai.';
       }
+      if (message.contains('GoogleSignInExceptionCode.canceled') || message.contains('GoogleSignInException')) {
+        if (message.contains('16') || message.contains('developer_error')) {
+          return 'Gagal Login Google: Konfigurasi SHA-1 sidik jari tidak terdaftar di Firebase Console (DEVELOPER_ERROR 16).';
+        }
+        return 'Login Google dibatalkan oleh pengguna.';
+      }
       if (message.contains('popup-blocked')) {
         return 'Popup login Google diblokir browser. Izinkan popup lalu coba lagi.';
       }

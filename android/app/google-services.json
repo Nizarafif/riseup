@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "577024698209-qsvp8k6erq3tmuv4tt4qotfp8f0t2hu6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.riseup.riseup",
+            "certificate_hash": "b9141e5fda8555919948093cbb7805e500b2bc66"
+          }
+        },
+        {
           "client_id": "577024698209-brjl8al6quvgcchdhacp1g3fj7bltc40.apps.googleusercontent.com",
           "client_type": 3
         }
