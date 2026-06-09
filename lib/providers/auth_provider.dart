@@ -96,7 +96,25 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      _errorMessage = _formatAuthError(e);
+      _status = AuthStatus.error;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> signInWithGoogle() async {
+    try {
+      _status = AuthStatus.authenticating;
+      _errorMessage = '';
+      notifyListeners();
+
+      _user = await _authService.signInWithGoogle();
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = _formatAuthError(e);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -115,7 +133,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      _errorMessage = _formatAuthError(e);
       _status = AuthStatus.error;
       notifyListeners();
       return false;
@@ -144,10 +162,61 @@ class AuthProvider extends ChangeNotifier {
       await _authService.sendPasswordResetEmail(email);
       return true;
     } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+      _errorMessage = _formatAuthError(e);
       notifyListeners();
       return false;
     }
   }
-}
 
+  String _formatAuthError(Object error) {
+    if (error is Exception) {
+      final message = error.toString().replaceAll('Exception:', '').trim();
+      if (message.contains('email-already-in-use')) {
+        return 'Email sudah terdaftar.';
+      }
+      if (message.contains('invalid-email')) {
+        return 'Format email tidak valid.';
+      }
+      if (message.contains('weak-password')) {
+        return 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+      }
+      if (message.contains('operation-not-allowed')) {
+        return 'Login Email/Password belum diaktifkan di Firebase Console.';
+      }
+      if (message.contains('data pengguna Firebase tidak ditemukan')) {
+        return 'Akun berhasil dibuat, tapi sesi Firebase belum siap. Coba login lagi.';
+      }
+      if (message.contains('permission-denied')) {
+        return 'Firestore menolak akses. Cek Firebase rules untuk koleksi users.';
+      }
+      if (message.contains('popup_closed_by_user')) {
+        return 'Login Google dibatalkan sebelum selesai.';
+      }
+      if (message.contains('popup-blocked')) {
+        return 'Popup login Google diblokir browser. Izinkan popup lalu coba lagi.';
+      }
+      if (message.contains('network-request-failed')) {
+        return 'Koneksi ke Firebase gagal. Cek internet atau blokir browser.';
+      }
+      if (message.contains('account-exists-with-different-credential')) {
+        return 'Email ini sudah terdaftar dengan metode login lain.';
+      }
+      if (message.contains('Google Sign-In tidak tersedia saat mode mock aktif')) {
+        return 'Google Sign-In belum siap karena Firebase masih fallback ke mode mock.';
+      }
+      if (message.contains('Google tidak mengembalikan token login')) {
+        return 'Google Sign-In gagal mengambil token akun.';
+      }
+      if (message.contains('invalid-credential') ||
+          message.contains('wrong-password') ||
+          message.contains('user-not-found')) {
+        return 'Email atau password salah.';
+      }
+      if (message.contains('too-many-requests')) {
+        return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+      }
+      return message;
+    }
+    return error.toString();
+  }
+}

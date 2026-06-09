@@ -16,7 +16,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscureText = true;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isSocialLoading = false;
   String _socialPlatform = '';
 
@@ -56,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pendaftaran berhasil! Silakan masuk.'),
+          content: Text('Pendaftaran berhasil! Akun Anda sudah aktif.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -70,18 +71,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _socialSignUp(String platform, String email) async {
+  Future<void> _signUpWithGoogle() async {
     setState(() {
       _isSocialLoading = true;
-      _socialPlatform = platform;
+      _socialPlatform = 'Google';
     });
 
-    // Simulasi verifikasi media sosial
-    await Future.delayed(const Duration(milliseconds: 1200));
-
-    if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.signIn(email, 'password');
+    final success = await authProvider.signInWithGoogle();
 
     if (!mounted) return;
     setState(() {
@@ -90,20 +87,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (success) {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Berhasil mendaftar & masuk via $platform!'),
-          backgroundColor: const Color(0xFF00C9A7),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      return;
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(authProvider.errorMessage),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+  }
+
+  void _socialSignUp(String platform) async {
+    if (platform == 'Google') {
+      await _signUpWithGoogle();
+      return;
+    }
+
+    setState(() {
+      _isSocialLoading = true;
+      _socialPlatform = platform;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    if (!mounted) return;
+    setState(() {
+      _isSocialLoading = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Daftar dengan $platform belum diaktifkan.'),
+        backgroundColor: Colors.orange,
+      ),
+    );
   }
 
   void _showPhoneSignUpDialog() {
@@ -244,7 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       });
                     } else {
                       Navigator.pop(context);
-                      _socialSignUp('No. Telepon', 'user@riseup.com');
+                      _socialSignUp('No. Telepon');
                     }
                   },
                   child: Text(isOtpSent ? 'Verifikasi' : 'Kirim OTP'),
@@ -394,11 +412,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           // Password Input (Chubby)
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: _obscureText,
+                            obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
+                              suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
+                              suffixIcon: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    color: const Color(0xFF6C63FF),
+                                    size: 22,
+                                  ),
+                                  tooltip: _obscurePassword ? 'Tampilkan password' : 'Sembunyikan password',
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
                                 borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
@@ -428,11 +463,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           // Confirm Password Input (Chubby)
                           TextFormField(
                             controller: _confirmPasswordController,
-                            obscureText: _obscureText,
+                            obscureText: _obscureConfirmPassword,
                             decoration: InputDecoration(
                               labelText: 'Konfirmasi Password',
                               labelStyle: const TextStyle(fontSize: 13),
                               prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
+                              suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
+                              suffixIcon: Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    color: const Color(0xFF6C63FF),
+                                    size: 22,
+                                  ),
+                                  tooltip: _obscureConfirmPassword ? 'Tampilkan password' : 'Sembunyikan password',
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    });
+                                  },
+                                ),
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
                                 borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
@@ -509,7 +561,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
-                                        : () => _socialSignUp('Google', 'user@riseup.com'),
+                                        : () => _socialSignUp('Google'),
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Colors.black12, width: 1.5),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

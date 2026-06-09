@@ -39,6 +39,7 @@ dependencies:
   firebase_core: ^3.1.0
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.0
+  google_sign_in: ^7.2.0
 
   # State management and UI utilities
   provider: ^6.1.2
@@ -110,4 +111,3 @@ flutter_launcher_icons:
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "assets/images/Logo_padded.png"
   remove_alpha_ios: true
-
