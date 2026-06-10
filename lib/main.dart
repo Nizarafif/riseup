@@ -13,9 +13,11 @@ import 'views/onboarding/palette_setup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   runApp(const MyApp());
 }
 
@@ -26,15 +28,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(),
-        ),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
         ChangeNotifierProvider<DiagnosticProvider>(
           create: (_) => DiagnosticProvider(),
         ),
-        ChangeNotifierProvider<MoodProvider>(
-          create: (_) => MoodProvider(),
-        ),
+        ChangeNotifierProvider<MoodProvider>(create: (_) => MoodProvider()),
       ],
       child: MaterialApp(
         title: 'RiseUp - Monitoring Kesehatan Mental',
@@ -72,11 +70,7 @@ class AuthWrapper extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     switch (authProvider.status) {
       case AuthStatus.uninitialized:
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       case AuthStatus.authenticating:
       case AuthStatus.unauthenticated:
       case AuthStatus.error:

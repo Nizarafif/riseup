@@ -107,7 +107,7 @@ class AuthService {
     } else {
       await _initializeGoogleSignIn();
       final googleUser = await _googleSignIn.authenticate();
-      final googleAuth = googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
       if (googleAuth.idToken == null) {
         throw Exception('Google tidak mengembalikan token login.');
       }

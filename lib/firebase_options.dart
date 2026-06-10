@@ -50,20 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD29r7KnTOY-ve6oXh694s6wYJwXYks2sg',
-    appId: '1:577024698209:web:7e21b0c493956c22b1c720',
-    messagingSenderId: '577024698209',
-    projectId: 'riseup-flutter',
-    authDomain: 'riseup-flutter.firebaseapp.com',
-    storageBucket: 'riseup-flutter.firebasestorage.app',
-    measurementId: 'G-N8XN0YX7K9',
+    apiKey: 'AIzaSyCpc2ewov46HVOM0ZBLQNuLZQnNXYt_Qxw',
+    appId: '1:855200062467:web:7e21b0c493956c22b1c720', // Web is placeholder, we are using Android
+    messagingSenderId: '855200062467',
+    projectId: 'riseup-79c9a',
+    authDomain: 'riseup-79c9a.firebaseapp.com',
+    storageBucket: 'riseup-79c9a.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBgTN3MPuKIpM3XedW5JM69cFqFV_3CbKs',
-    appId: '1:577024698209:android:718f280a3c72abdbb1c720',
-    messagingSenderId: '577024698209',
-    projectId: 'riseup-flutter',
-    storageBucket: 'riseup-flutter.firebasestorage.app',
+    apiKey: 'AIzaSyAL1nWBKQ-b9KmzEcdskVwAeoOpcMlTPOQ',
+    appId: '1:624940810803:android:36fff8d545364bbf86d946',
+    messagingSenderId: '624940810803',
+    projectId: 'nizar-riseup',
+    storageBucket: 'nizar-riseup.firebasestorage.app',
   );
 }

@@ -1,4 +1,4 @@
-package com.riseup.riseup
+package com.nizar.riseup
 
 import io.flutter.embedding.android.FlutterActivity
 

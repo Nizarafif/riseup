@@ -1,49 +1,41 @@
 {
   "project_info": {
-    "project_number": "577024698209",
-    "project_id": "riseup-flutter",
-    "storage_bucket": "riseup-flutter.firebasestorage.app"
+    "project_number": "624940810803",
+    "project_id": "nizar-riseup",
+    "storage_bucket": "nizar-riseup.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:577024698209:android:718f280a3c72abdbb1c720",
+        "mobilesdk_app_id": "1:624940810803:android:36fff8d545364bbf86d946",
         "android_client_info": {
-          "package_name": "com.riseup.riseup"
+          "package_name": "com.nizar.riseup"
         }
       },
       "oauth_client": [
         {
-          "client_id": "577024698209-4nnlniqmgf2q9qat3us33t7g1tiklb4l.apps.googleusercontent.com",
+          "client_id": "624940810803-kpprqrkr0se1hjdpn5236t5677j58rgn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.riseup.riseup",
-            "certificate_hash": "55b55882f352168d868793ddbdcb5cbc8dfa57ce"
-          }
-        },
-        {
-          "client_id": "577024698209-qsvp8k6erq3tmuv4tt4qotfp8f0t2hu6.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.riseup.riseup",
+            "package_name": "com.nizar.riseup",
             "certificate_hash": "b9141e5fda8555919948093cbb7805e500b2bc66"
           }
         },
         {
-          "client_id": "577024698209-brjl8al6quvgcchdhacp1g3fj7bltc40.apps.googleusercontent.com",
+          "client_id": "624940810803-2ijikmj11871265eki55dd5ll14o2cnl.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBgTN3MPuKIpM3XedW5JM69cFqFV_3CbKs"
+          "current_key": "AIzaSyAL1nWBKQ-b9KmzEcdskVwAeoOpcMlTPOQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "577024698209-brjl8al6quvgcchdhacp1g3fj7bltc40.apps.googleusercontent.com",
+              "client_id": "624940810803-2ijikmj11871265eki55dd5ll14o2cnl.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
