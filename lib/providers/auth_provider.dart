@@ -13,6 +13,10 @@ class AuthProvider extends ChangeNotifier {
   bool _onboardingCompleted = false;
   bool _privacyAccepted = false;
   bool _paletteSetupCompleted = false;
+  bool _activitySetupCompleted = false;
+  List<String> _selectedActivities = [];
+  bool _reminderSetupCompleted = false;
+  TimeOfDay _selectedReminderTime = const TimeOfDay(hour: 20, minute: 0);
   int _selectedPaletteIndex = 0;
   int _selectedEmojiThemeIndex = 0;
   int _selectedBackgroundThemeIndex = 0;
@@ -23,6 +27,10 @@ class AuthProvider extends ChangeNotifier {
   bool get onboardingCompleted => _onboardingCompleted;
   bool get privacyAccepted => _privacyAccepted;
   bool get paletteSetupCompleted => _paletteSetupCompleted;
+  bool get activitySetupCompleted => _activitySetupCompleted;
+  List<String> get selectedActivities => _selectedActivities;
+  bool get reminderSetupCompleted => _reminderSetupCompleted;
+  TimeOfDay get selectedReminderTime => _selectedReminderTime;
   int get selectedPaletteIndex => _selectedPaletteIndex;
   int get selectedEmojiThemeIndex => _selectedEmojiThemeIndex;
   int get selectedBackgroundThemeIndex => _selectedBackgroundThemeIndex;
@@ -65,6 +73,30 @@ class AuthProvider extends ChangeNotifier {
     _paletteSetupCompleted = false;
     _privacyAccepted = false;
     _selectedBackgroundThemeIndex = 0;
+    notifyListeners();
+  }
+
+  void completeActivitySetup(List<String> activities) {
+    _selectedActivities = activities;
+    _activitySetupCompleted = true;
+    notifyListeners();
+  }
+
+  void resetActivitySetup() {
+    _activitySetupCompleted = false;
+    _paletteSetupCompleted = false;
+    notifyListeners();
+  }
+
+  void completeReminderSetup(TimeOfDay time) {
+    _selectedReminderTime = time;
+    _reminderSetupCompleted = true;
+    notifyListeners();
+  }
+
+  void resetReminderSetup() {
+    _reminderSetupCompleted = false;
+    _activitySetupCompleted = false;
     notifyListeners();
   }
 

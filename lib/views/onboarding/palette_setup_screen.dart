@@ -52,23 +52,23 @@ class _PaletteSetupScreenState extends State<PaletteSetupScreen> {
                       },
                       tooltip: 'Kembali',
                     ),
-                    // Indikator Halaman (3 titik, titik tengah aktif)
+                    // Indikator Halaman (3 titik, titik pertama aktif)
                     Row(
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: textColor.withOpacity(0.3),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
                         Container(
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
                             color: textColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: textColor.withOpacity(0.3),
                             shape: BoxShape.circle,
                           ),
                         ),

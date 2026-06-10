@@ -10,6 +10,8 @@ import 'views/home/dashboard_screen.dart';
 import 'views/onboarding/onboarding_screen.dart';
 import 'views/onboarding/privacy_screen.dart';
 import 'views/onboarding/palette_setup_screen.dart';
+import 'views/onboarding/activity_setup_screen.dart';
+import 'views/onboarding/reminder_setup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,6 +82,10 @@ class AuthWrapper extends StatelessWidget {
           return const PrivacyScreen();
         } else if (!authProvider.paletteSetupCompleted) {
           return const PaletteSetupScreen();
+        } else if (!authProvider.activitySetupCompleted) {
+          return const ActivitySetupScreen();
+        } else if (!authProvider.reminderSetupCompleted) {
+          return const ReminderSetupScreen();
         } else {
           return const LoginScreen();
         }
