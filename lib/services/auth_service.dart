@@ -46,6 +46,10 @@ class AuthService {
         throw Exception('Firebase belum diinisialisasi di main.dart.');
       }
 
+      if (kIsWeb && Firebase.app().options.apiKey == 'AIzaSyCpc2ewov46HVOM0ZBLQNuLZQnNXYt_Qxw') {
+        throw Exception('Firebase Web menggunakan API key placeholder. Menggunakan Mock Mode.');
+      }
+
       _auth = FirebaseAuth.instance;
       await _initializeGoogleSignIn();
       await FirestoreService().initialize();
