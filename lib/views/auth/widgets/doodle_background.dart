@@ -5,8 +5,9 @@ import '../../../providers/auth_provider.dart';
 
 class DoodleBackground extends StatefulWidget {
   final Widget child;
+  final int? themeIndexOverride;
 
-  const DoodleBackground({super.key, required this.child});
+  const DoodleBackground({super.key, required this.child, this.themeIndexOverride});
 
   @override
   State<DoodleBackground> createState() => _DoodleBackgroundState();
@@ -35,7 +36,7 @@ class _DoodleBackgroundState extends State<DoodleBackground>
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final themeIndex = authProvider.selectedBackgroundThemeIndex;
+    final themeIndex = widget.themeIndexOverride ?? authProvider.selectedBackgroundThemeIndex;
 
     return AnimatedBuilder(
       animation: _controller,

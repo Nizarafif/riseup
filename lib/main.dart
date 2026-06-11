@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/diagnostic_provider.dart';
 import 'providers/mood_provider.dart';
+import 'services/revenue_cat_service.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/dashboard_screen.dart';
 import 'views/onboarding/onboarding_screen.dart';
@@ -12,14 +14,24 @@ import 'views/onboarding/privacy_screen.dart';
 import 'views/onboarding/palette_setup_screen.dart';
 import 'views/onboarding/activity_setup_screen.dart';
 import 'views/onboarding/reminder_setup_screen.dart';
+import 'views/onboarding/premium_trial_screen.dart';
+import 'views/onboarding/initial_mood_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inisialisasi format penanggalan lokal Indonesia (id_ID)
+  await initializeDateFormatting('id_ID', null);
+
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
+  
+  // Inisialisasi SDK RevenueCat secara asinkron
+  await RevenueCatService.initialize();
+  
   runApp(const MyApp());
 }
 
@@ -86,6 +98,10 @@ class AuthWrapper extends StatelessWidget {
           return const ActivitySetupScreen();
         } else if (!authProvider.reminderSetupCompleted) {
           return const ReminderSetupScreen();
+        } else if (!authProvider.trialSetupCompleted) {
+          return const PremiumTrialScreen();
+        } else if (!authProvider.initialMoodSetupCompleted) {
+          return const InitialMoodScreen();
         } else {
           return const LoginScreen();
         }

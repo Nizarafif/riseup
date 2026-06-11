@@ -8,7 +8,8 @@ import '../../providers/diagnostic_provider.dart';
 import '../../widgets/mood_theme_helper.dart';
 
 class MonitoringScreen extends StatefulWidget {
-  const MonitoringScreen({super.key});
+  final bool isEmbedded;
+  const MonitoringScreen({super.key, this.isEmbedded = false});
 
   @override
   State<MonitoringScreen> createState() => _MonitoringScreenState();
@@ -40,6 +41,36 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isEmbedded) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: const Color(0xFF6C63FF),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: const Color(0xFF6C63FF),
+              indicatorSize: TabBarIndicatorSize.tab,
+              tabs: const [
+                Tab(icon: Icon(Icons.show_chart_rounded), text: 'Grafik Tren Mood'),
+                Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Tes Pakar'),
+              ],
+            ),
+          ),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildMoodChartTab(),
+            _buildHistoryTab(),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(

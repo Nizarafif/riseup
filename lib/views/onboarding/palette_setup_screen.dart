@@ -22,6 +22,8 @@ class _PaletteSetupScreenState extends State<PaletteSetupScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       setState(() {
+        _selectedPaletteIndex = authProvider.selectedPaletteIndex;
+        _selectedEmojiThemeIndex = authProvider.selectedEmojiThemeIndex;
         _selectedBackgroundThemeIndex = authProvider.selectedBackgroundThemeIndex;
       });
     });

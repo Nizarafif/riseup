@@ -38,10 +38,19 @@ class _ReminderSetupScreenState extends State<ReminderSetupScreen> {
       },
     );
 
-    if (picked != null && picked != _reminderTime) {
-      setState(() {
-        _reminderTime = picked;
-      });
+    if (picked != null) {
+      if (picked != _reminderTime) {
+        setState(() {
+          _reminderTime = picked;
+        });
+      }
+      
+      // Otomatis memicu pop-up izin notifikasi setelah mengatur jam
+      try {
+        await Permission.notification.request();
+      } catch (e) {
+        debugPrint('Gagal meminta izin notifikasi: $e');
+      }
     }
   }
 

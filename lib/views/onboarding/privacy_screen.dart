@@ -14,6 +14,7 @@ class PrivacyScreen extends StatefulWidget {
 class _PrivacyScreenState extends State<PrivacyScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
+  bool _isAgreed = false;
 
   @override
   void initState() {
@@ -258,17 +259,67 @@ class _PrivacyScreenState extends State<PrivacyScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Checkbox Persetujuan Kebijakan
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isAgreed = !_isAgreed;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _isAgreed,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        _isAgreed = value ?? false;
+                                      });
+                                    },
+                                    activeColor: const Color(0xFF6C63FF),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Saya menyetujui Ketentuan Layanan & Kebijakan Privasi RiseUp.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF4A4A68),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         // Tombol Setuju (Utama)
                         SizedBox(
                           height: 52,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Provider.of<AuthProvider>(context, listen: false)
-                                  .acceptPrivacy();
-                            },
+                            onPressed: _isAgreed
+                                ? () {
+                                    Provider.of<AuthProvider>(context, listen: false)
+                                        .acceptPrivacy();
+                                  }
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6C63FF),
                               foregroundColor: Colors.white,
+                              disabledBackgroundColor: const Color(0xFF6C63FF).withOpacity(0.3),
+                              disabledForegroundColor: Colors.white.withOpacity(0.6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/revenue_cat_service.dart';
 
 enum AuthStatus { uninitialized, authenticated, unauthenticated, authenticating, error }
 
@@ -16,6 +17,10 @@ class AuthProvider extends ChangeNotifier {
   bool _activitySetupCompleted = false;
   List<String> _selectedActivities = [];
   bool _reminderSetupCompleted = false;
+  bool _trialSetupCompleted = false;
+  bool _isPremium = false;
+  bool _initialMoodSetupCompleted = false;
+  int? _initialMoodLevel;
   TimeOfDay _selectedReminderTime = const TimeOfDay(hour: 20, minute: 0);
   int _selectedPaletteIndex = 0;
   int _selectedEmojiThemeIndex = 0;
@@ -30,6 +35,10 @@ class AuthProvider extends ChangeNotifier {
   bool get activitySetupCompleted => _activitySetupCompleted;
   List<String> get selectedActivities => _selectedActivities;
   bool get reminderSetupCompleted => _reminderSetupCompleted;
+  bool get trialSetupCompleted => _trialSetupCompleted;
+  bool get isPremium => _isPremium;
+  bool get initialMoodSetupCompleted => _initialMoodSetupCompleted;
+  int? get initialMoodLevel => _initialMoodLevel;
   TimeOfDay get selectedReminderTime => _selectedReminderTime;
   int get selectedPaletteIndex => _selectedPaletteIndex;
   int get selectedEmojiThemeIndex => _selectedEmojiThemeIndex;
@@ -76,6 +85,12 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void editMoodTheme() {
+    _paletteSetupCompleted = false;
+    _initialMoodSetupCompleted = false;
+    notifyListeners();
+  }
+
   void completeActivitySetup(List<String> activities) {
     _selectedActivities = activities;
     _activitySetupCompleted = true;
@@ -97,6 +112,44 @@ class AuthProvider extends ChangeNotifier {
   void resetReminderSetup() {
     _reminderSetupCompleted = false;
     _activitySetupCompleted = false;
+    notifyListeners();
+  }
+
+  void completeTrialSetup() {
+    _trialSetupCompleted = true;
+    notifyListeners();
+  }
+
+  void completeInitialMoodSetup() {
+    _initialMoodSetupCompleted = true;
+    notifyListeners();
+  }
+
+  void resetInitialMoodSetup() {
+    _initialMoodSetupCompleted = false;
+    _trialSetupCompleted = false;
+    notifyListeners();
+  }
+
+  void setInitialMoodLevel(int? level) {
+    _initialMoodLevel = level;
+    notifyListeners();
+  }
+
+  void setPremiumStatus(bool premium) {
+    _isPremium = premium;
+    notifyListeners();
+  }
+
+  Future<void> updatePremiumStatus() async {
+    final status = await RevenueCatService.checkPremiumStatus();
+    _isPremium = status;
+    notifyListeners();
+  }
+
+  void resetTrialSetup() {
+    _trialSetupCompleted = false;
+    _reminderSetupCompleted = false;
     notifyListeners();
   }
 
