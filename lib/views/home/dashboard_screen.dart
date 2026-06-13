@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -15,6 +17,7 @@ import '../monitoring/monitoring_screen.dart';
 import '../../widgets/mood_theme_helper.dart';
 import '../onboarding/palette_setup_screen.dart';
 import '../auth/widgets/doodle_background.dart';
+import '../music/ambient_music_sheet.dart';
 
 class AvatarData {
   final String emoji;
@@ -24,17 +27,43 @@ class AvatarData {
 
 const List<AvatarData> presetAvatars = [
   AvatarData('😊', [Color(0xFF80EE98), Color(0xFF46CDCF)]), // Happy face / teal
-  AvatarData('🌸', [Color(0xFFFEC8D8), Color(0xFFD291BC)]), // Cherry blossom / pink/purple
+  AvatarData('🌸', [
+    Color(0xFFFEC8D8),
+    Color(0xFFD291BC),
+  ]), // Cherry blossom / pink/purple
   AvatarData('⭐', [Color(0xFFFFE57F), Color(0xFFFFD54F)]), // Star / yellow
   AvatarData('☁️', [Color(0xFFBAE6FD), Color(0xFF38BDF8)]), // Cloud / sky blue
   AvatarData('🍃', [Color(0xFFA7F3D0), Color(0xFF059669)]), // Leaf / emerald
   AvatarData('🐱', [Color(0xFFFFD1A9), Color(0xFFFF9E79)]), // Cat / orange
-  AvatarData('🌟', [Color(0xFFFFF176), Color(0xFFF57F17)]), // Glowing Star / deep gold
-  AvatarData('🌈', [Color(0xFFFFD1D1), Color(0xFFD1E8E2)]), // Rainbow / pastel multi
-  AvatarData('🧸', [Color(0xFFE2B4BD), Color(0xFF9B5DE5)]), // Teddy Bear / soft purple
+  AvatarData('🌟', [
+    Color(0xFFFFF176),
+    Color(0xFFF57F17),
+  ]), // Glowing Star / deep gold
+  AvatarData('🌈', [
+    Color(0xFFFFD1D1),
+    Color(0xFFD1E8E2),
+  ]), // Rainbow / pastel multi
+  AvatarData('🧸', [
+    Color(0xFFE2B4BD),
+    Color(0xFF9B5DE5),
+  ]), // Teddy Bear / soft purple
   AvatarData('🦊', [Color(0xFFFFE3E3), Color(0xFFFF7043)]), // Fox / coral red
-  AvatarData('☕', [Color(0xFFD7CCC8), Color(0xFF8D6E63)]), // Coffee cup / warm brown
+  AvatarData('☕', [
+    Color(0xFFD7CCC8),
+    Color(0xFF8D6E63),
+  ]), // Coffee cup / warm brown
   AvatarData('🎨', [Color(0xFFE1BEE7), Color(0xFF8E24AA)]), // Palette / violet
+];
+
+const List<String> mentalHealthQuotes = [
+  'Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak.',
+  'Tidak apa-apa untuk tidak merasa baik-baik saja. Kamu tidak harus berpura-pura kuat sepanjang waktu.',
+  'Satu langkah kecil menuju perawatan diri hari ini adalah kemenangan besar bagi mentalmu.',
+  'Kesehatan mental bukanlah tujuan akhir, melainkan sebuah perjalanan harian yang patut disyukuri.',
+  'Tarik napas dalam-dalam, hembuskan perlahan. Hari ini baru dimulai, dan kamu sanggup menjalaninya.',
+  'Mencintai diri sendiri berarti menerima bahwa kamu juga berhak untuk beristirahat dan pulih.',
+  'Pikiranmu bisa menjadi tempat yang damai jika kamu memperlakukannya dengan kebaikan dan kesabaran.',
+  'Kamu berharga, tidak peduli seberapa berat hari-hari yang sedang kamu lalui saat ini.'
 ];
 
 class DashboardScreen extends StatefulWidget {
@@ -51,9 +80,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
   bool _isMenuOpen = false;
   DateTime? _lastPressedAt;
+  late DiagnosticProvider _diagnosticProvider;
+  late String _currentQuote;
 
   ImageProvider _getImageProvider(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
+    if (path.startsWith('http://') ||
+        path.startsWith('https://') ||
+        path.startsWith('blob:')) {
       return NetworkImage(path);
     }
     if (kIsWeb) {
@@ -66,7 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<bool> _onWillPop() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
-    
+
     // Jika pengguna adalah non-admin dan tidak di tab pertama (Beranda),
     // alihkan ke tab Beranda terlebih dahulu sebelum keluar.
     if (user != null && user.role != 'admin' && _currentIndex != 0) {
@@ -78,16 +111,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final now = DateTime.now();
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
-    final snackBarBgColor = isDarkBg ? const Color(0xFF1E1E38) : const Color(0xFF3F3D56);
-    final borderSide = isDarkBg ? const BorderSide(color: Colors.white10, width: 1) : BorderSide.none;
+    final snackBarBgColor = isDarkBg
+        ? const Color(0xFF1E1E38)
+        : const Color(0xFF3F3D56);
+    final borderSide = isDarkBg
+        ? const BorderSide(color: Colors.white10, width: 1)
+        : BorderSide.none;
 
-    if (_lastPressedAt == null || now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+    if (_lastPressedAt == null ||
+        now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
       _lastPressedAt = now;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: const [
-              Icon(Icons.exit_to_app_rounded, color: Color(0xFF00C9A7), size: 20),
+              Icon(
+                Icons.exit_to_app_rounded,
+                color: Color(0xFF00C9A7),
+                size: 20,
+              ),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -119,16 +161,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _currentQuote = mentalHealthQuotes[math.Random().nextInt(mentalHealthQuotes.length)];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.user;
       if (user != null) {
+        if (user.role == 'admin') {
+          _diagnosticProvider.listenToAdminData();
+        }
         // Cek dan simpan mood awal yang dipilih saat onboarding
-        if (authProvider.initialMoodLevel != null && authProvider.initialMoodLevel! > 0) {
+        if (authProvider.initialMoodLevel != null &&
+            authProvider.initialMoodLevel! > 0) {
           final level = authProvider.initialMoodLevel!;
-          Provider.of<MoodProvider>(context, listen: false)
-              .addMood(user.uid, level, '')
-              .then((success) {
+          Provider.of<MoodProvider>(
+            context,
+            listen: false,
+          ).addMood(user.uid, level, '').then((success) {
             if (success && mounted) {
               setState(() {
                 _moodLoggedToday = true;
@@ -138,9 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           authProvider.setInitialMoodLevel(null);
         }
 
-        Provider.of<DiagnosticProvider>(context, listen: false)
-            .loadDiagnosticData(user.uid)
-            .then((_) {
+        _diagnosticProvider.loadDiagnosticData(user.uid).then((_) {
           if (mounted) {
             _checkFirstTimeUser();
           }
@@ -150,12 +196,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+  }
+
   void _checkFirstTimeUser() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+    final diagnosticProvider = Provider.of<DiagnosticProvider>(
+      context,
+      listen: false,
+    );
     final user = authProvider.user;
 
-    if (user != null && user.role == 'user' && diagnosticProvider.historyList.isEmpty) {
+    if (user != null &&
+        user.role == 'user' &&
+        !diagnosticProvider.hasTestedToday &&
+        diagnosticProvider.historyList.isEmpty) {
       _showWelcomeTestDialog();
     }
   }
@@ -163,10 +221,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showWelcomeTestDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext context) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+        final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+        final titleColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+        final contentColor = isDarkBg ? Colors.white70 : const Color(0xFF505050);
+
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: dialogBgColor,
           title: Row(
             children: [
               Container(
@@ -175,37 +242,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Color(0xFF6C63FF),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 22),
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Selamat Datang!',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: titleColor,
+                ),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'Untuk dapat mendeteksi awal dan memantau kondisi kesehatan mental Anda secara mandiri dengan optimal, sistem pakar kami membutuhkan data analisis awal.\n\nSilakan isi tes kuesioner singkat terlebih dahulu.',
-            style: TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF505050)),
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: contentColor,
+            ),
           ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
           actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Nanti Saja',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                Provider.of<DiagnosticProvider>(context, listen: false).resetScreening();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ScreeningScreen()),
-                );
+                _startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6C63FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
               ),
               child: const Text(
                 'Mulai Tes Sekarang',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
@@ -214,23 +312,98 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _startScreeningTest(BuildContext context, DiagnosticProvider diagnosticProvider) {
+    if (diagnosticProvider.hasTestedToday) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+          final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+          final textColor = isDarkBg ? Colors.white : const Color(0xFF1E293B);
+          
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: dialogBgColor,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 32),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Batasan Harian',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Anda sudah melakukan tes skrining hari ini. Sesuai dengan anjuran klinis, tes skrining sebaiknya dilakukan maksimal sekali sehari untuk memantau kondisi perkembangan emosi secara optimal.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: isDarkBg ? Colors.white70 : const Color(0xFF64748B),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6C63FF),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      child: const Text(
+                        'Mengerti',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      diagnosticProvider.resetScreening();
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ScreeningScreen()),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _noteController.dispose();
+    _diagnosticProvider.cancelAdminListeners();
     super.dispose();
   }
 
   void _submitMood() async {
     if (_selectedMoodLevel == 0) return;
-    
+
     final user = Provider.of<AuthProvider>(context, listen: false).user;
     if (user == null) return;
 
-    final success = await Provider.of<MoodProvider>(context, listen: false).addMood(
-      user.uid,
-      _selectedMoodLevel,
-      _noteController.text,
-    );
+    final success = await Provider.of<MoodProvider>(
+      context,
+      listen: false,
+    ).addMood(user.uid, _selectedMoodLevel, _noteController.text);
 
     if (success && mounted) {
       setState(() {
@@ -255,117 +428,283 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showAmbientMusicSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AmbientMusicSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final user = authProvider.user;
-    
+
     final paletteIdx = authProvider.selectedPaletteIndex;
     final emojiThemeIdx = authProvider.selectedEmojiThemeIndex;
 
     if (user == null) return const LoginScreen();
 
-    final latestHistory = diagnosticProvider.historyList.isNotEmpty 
-        ? diagnosticProvider.historyList.first 
+    final latestHistory = diagnosticProvider.historyList.isNotEmpty
+        ? diagnosticProvider.historyList.first
         : null;
 
     if (user.role == 'admin') {
       return WillPopScope(
         onWillPop: _onWillPop,
         child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FD),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.1),
-                  shape: BoxShape.circle,
+          backgroundColor: const Color(0xFFF8F9FD),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6C63FF).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    color: Color(0xFF6C63FF),
+                    size: 20,
+                  ),
                 ),
-                child: const Icon(Icons.favorite_rounded, color: Color(0xFF6C63FF), size: 20),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'RiseUp - Admin',
-                style: TextStyle(color: Color(0xFF3F3D56), fontWeight: FontWeight.bold, fontSize: 20),
+                const SizedBox(width: 10),
+                const Text(
+                  'RiseUp - Admin',
+                  style: TextStyle(
+                    color: Color(0xFF3F3D56),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  color: Color(0xFF3F3D56),
+                ),
+                onPressed: () {
+                  authProvider.signOut();
+                },
+                tooltip: 'Keluar',
               ),
             ],
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout_rounded, color: Color(0xFF3F3D56)),
-              onPressed: () {
-                authProvider.signOut();
-              },
-              tooltip: 'Keluar',
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Halo, ${user.name}!',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF3F3D56),
-                          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Sambutan Pakar
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF6C63FF),
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFF6C63FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Masuk sebagai Pakar/Admin',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF707070),
-                          ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '👨‍⚕️',
+                          style: TextStyle(fontSize: 24),
                         ),
-                      ],
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber[800],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-                    label: const Text('Panel Pakar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Halo, ${user.name}!',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Masuk sebagai Pakar/Admin',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Judul Ringkasan Sistem Pakar
+                const Text(
+                  'Ringkasan Sistem Pakar',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: 0.5,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 12),
+                
+                // Grid Insights Cepat
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.6,
+                  children: [
+                    _buildAdminStatCard(
+                      icon: Icons.people_alt_rounded,
+                      title: 'Total Pengguna',
+                      value: '${diagnosticProvider.allUsers.where((u) => u.role != 'admin').length}',
+                      color: Colors.blueAccent,
+                    ),
+                    _buildAdminStatCard(
+                      icon: Icons.history_edu_rounded,
+                      title: 'Total Skrining',
+                      value: '${diagnosticProvider.allHistories.length}',
+                      color: const Color(0xFF6C63FF),
+                    ),
+                    _buildAdminStatCard(
+                      icon: Icons.spa_rounded,
+                      title: 'Gejala Terdaftar',
+                      value: '${diagnosticProvider.symptoms.length}',
+                      color: const Color(0xFF8B5CF6),
+                    ),
+                    _buildAdminStatCard(
+                      icon: Icons.rule_folder_rounded,
+                      title: 'Aturan Keputusan',
+                      value: '${diagnosticProvider.rules.length}',
+                      color: const Color(0xFF10B981),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+
+                // Judul Navigasi Kontrol Panel
+                const Text(
+                  'Navigasi Kontrol Panel',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Daftar Kartu Navigasi
+                _buildQuickActionCard(
+                  context: context,
+                  icon: Icons.spa_rounded,
+                  title: 'Kelola Gejala Klinis',
+                  description: 'Tambah, ubah, atau hapus gejala mental pengguna',
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(initialTabIndex: 0),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionCard(
+                  context: context,
+                  icon: Icons.rule_rounded,
+                  title: 'Basis Aturan Keputusan',
+                  description: 'Rumuskan aturan logika inferensi Forward Chaining',
+                  color: const Color(0xFF10B981),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(initialTabIndex: 1),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionCard(
+                  context: context,
+                  icon: Icons.psychology_rounded,
+                  title: 'Daftar Diagnosis & Solusi',
+                  description: 'Kelola diagnosis gangguan psikologis dan solusinya',
+                  color: const Color(0xFFFF9F64),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(initialTabIndex: 2),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionCard(
+                  context: context,
+                  icon: Icons.analytics_rounded,
+                  title: 'Analitik & Monitoring Real-Time',
+                  description: 'Pantau tren hasil skrining dan aktivitas pengguna secara live',
+                  color: const Color(0xFF0284C7),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(initialTabIndex: 3),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionCard(
+                  context: context,
+                  icon: Icons.person_add_rounded,
+                  title: 'Daftarkan Admin / Pakar Baru',
+                  description: 'Daftarkan rekan pakar/admin baru untuk membantu analisis',
+                  color: const Color(0xFF00C9A7),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminDashboardScreen(initialTabIndex: 3),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
     }
 
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
 
     final List<Widget> tabs = [
       _buildHomeTab(context, user, paletteIdx, emojiThemeIdx, isDarkBg),
-      _buildScreeningTab(context, user, latestHistory, diagnosticProvider, isDarkBg),
+      _buildScreeningTab(
+        context,
+        user,
+        latestHistory,
+        diagnosticProvider,
+        isDarkBg,
+      ),
       const MonitoringScreen(isEmbedded: true),
       _buildSettingsTab(context, user, authProvider),
     ];
@@ -381,149 +720,194 @@ class _DashboardScreenState extends State<DashboardScreen> {
       onWillPop: _onWillPop,
       child: DoodleBackground(
         child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBody: true,
-        appBar: AppBar(
-          backgroundColor: isDarkBg ? Colors.transparent : Colors.white.withOpacity(0.9),
-          elevation: 0,
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDarkBg ? Colors.white.withOpacity(0.12) : const Color(0xFF6C63FF).withOpacity(0.1),
-                  shape: BoxShape.circle,
+          backgroundColor: Colors.transparent,
+          extendBody: true,
+          appBar: AppBar(
+            backgroundColor: isDarkBg
+                ? Colors.transparent
+                : Colors.white.withOpacity(0.9),
+            elevation: 0,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isDarkBg
+                        ? Colors.white.withOpacity(0.12)
+                        : const Color(0xFF6C63FF).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.favorite_rounded,
+                    color: isDarkBg
+                        ? const Color(0xFF00C9A7)
+                        : const Color(0xFF6C63FF),
+                    size: 20,
+                  ),
                 ),
-                child: Icon(
-                  Icons.favorite_rounded, 
-                  color: isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF), 
-                  size: 20,
+                const SizedBox(width: 10),
+                Text(
+                  screenTitle,
+                  style: TextStyle(
+                    color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: Stack(
+            children: [
+              IndexedStack(index: _currentIndex, children: tabs),
+              IgnorePointer(
+                ignoring: !_isMenuOpen,
+                child: AnimatedOpacity(
+                  opacity: _isMenuOpen ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isMenuOpen = false),
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                        child: Container(color: Colors.black.withOpacity(0.18)),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                screenTitle,
-                style: TextStyle(
-                  color: isDarkBg ? Colors.white : const Color(0xFF3F3D56), 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 20,
-                ),
+              _buildFloatingItem(
+                icon: Icons.spa_rounded,
+                label: 'Napas Lega',
+                color: Colors.purple,
+                onTap: () {
+                  setState(() => _isMenuOpen = false);
+                  _showBreathingGuide();
+                },
+                isOpen: _isMenuOpen,
+                targetBottom: 110,
+                targetLeft: screenWidth / 2 - 80 - 60,
+                closedBottom: 30,
+                closedLeft: screenWidth / 2 - 60,
+              ),
+              _buildFloatingItem(
+                icon: Icons.psychology_rounded,
+                label: 'Tes Pakar',
+                color: const Color(0xFF00C9A7),
+                onTap: () {
+                  setState(() => _isMenuOpen = false);
+                  _startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
+                },
+                isOpen: _isMenuOpen,
+                targetBottom: 110,
+                targetLeft: screenWidth / 2 + 80 - 60,
+                closedBottom: 30,
+                closedLeft: screenWidth / 2 - 60,
+              ),
+              _buildFloatingItem(
+                icon: Icons.music_note_rounded,
+                label: 'Melodi Damai',
+                color: const Color(0xFFEC4899),
+                onTap: () {
+                  setState(() => _isMenuOpen = false);
+                  _showAmbientMusicSheet();
+                },
+                isOpen: _isMenuOpen,
+                targetBottom: 175,
+                targetLeft: screenWidth / 2 - 60,
+                closedBottom: 30,
+                closedLeft: screenWidth / 2 - 60,
               ),
             ],
           ),
-        ),
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: tabs,
-          ),
-          IgnorePointer(
-            ignoring: !_isMenuOpen,
-            child: AnimatedOpacity(
-              opacity: _isMenuOpen ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: GestureDetector(
-                onTap: () => setState(() => _isMenuOpen = false),
-                child: ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                    child: Container(
-                      color: Colors.black.withOpacity(0.18),
-                    ),
+          bottomNavigationBar: Container(
+            height: 85,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            decoration: const BoxDecoration(color: Colors.transparent),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: isDarkBg
+                    ? const Color(0xFF1A1A3E).withOpacity(0.92)
+                    : Colors.white.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: isDarkBg
+                      ? Colors.white.withOpacity(0.12)
+                      : Colors.white.withOpacity(0.8),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDarkBg
+                        ? Colors.black.withOpacity(0.35)
+                        : const Color(0xFF6C63FF).withOpacity(0.08),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(
+                        0,
+                        Icons.home_outlined,
+                        Icons.home_rounded,
+                        'Beranda',
+                        isDarkBg
+                            ? const Color(0xFF00C9A7)
+                            : const Color(0xFF6C63FF),
+                      ),
+                      _buildNavItem(
+                        1,
+                        Icons.psychology_outlined,
+                        Icons.psychology_rounded,
+                        'Skrining',
+                        const Color(0xFF00C9A7),
+                      ),
+                      _buildMiddleAddButton(context),
+                      _buildNavItem(
+                        2,
+                        Icons.analytics_outlined,
+                        Icons.analytics_rounded,
+                        'Tren',
+                        isDarkBg
+                            ? const Color(0xFFFF9F64)
+                            : const Color(0xFFFF9F64),
+                      ),
+                      _buildNavItem(
+                        3,
+                        Icons.settings_outlined,
+                        Icons.settings_rounded,
+                        'Pengaturan',
+                        isDarkBg
+                            ? const Color(0xFFB39DDB)
+                            : const Color(0xFF9C27B0),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          _buildFloatingItem(
-            icon: Icons.spa_rounded,
-            label: 'Napas Lega',
-            color: Colors.purple,
-            onTap: () {
-              setState(() => _isMenuOpen = false);
-              _showBreathingGuide();
-            },
-            isOpen: _isMenuOpen,
-            targetBottom: 110,
-            targetLeft: screenWidth / 2 - 80 - 60,
-            closedBottom: 30,
-            closedLeft: screenWidth / 2 - 60,
-          ),
-          _buildFloatingItem(
-            icon: Icons.psychology_rounded,
-            label: 'Tes Pakar',
-            color: const Color(0xFF00C9A7),
-            onTap: () {
-              setState(() => _isMenuOpen = false);
-              final diagProvider = Provider.of<DiagnosticProvider>(context, listen: false);
-              diagProvider.resetScreening();
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ScreeningScreen()),
-              );
-            },
-            isOpen: _isMenuOpen,
-            targetBottom: 110,
-            targetLeft: screenWidth / 2 + 80 - 60,
-            closedBottom: 30,
-            closedLeft: screenWidth / 2 - 60,
-          ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        height: 85,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: isDarkBg
-                ? const Color(0xFF1A1A3E).withOpacity(0.92)
-                : Colors.white.withOpacity(0.92),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: isDarkBg
-                  ? Colors.white.withOpacity(0.12)
-                  : Colors.white.withOpacity(0.8),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: isDarkBg
-                    ? Colors.black.withOpacity(0.35)
-                    : const Color(0xFF6C63FF).withOpacity(0.08),
-                blurRadius: 20,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.home_outlined, Icons.home_rounded, 'Beranda', isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF)),
-                  _buildNavItem(1, Icons.psychology_outlined, Icons.psychology_rounded, 'Skrining', const Color(0xFF00C9A7)),
-                  _buildMiddleAddButton(context),
-                  _buildNavItem(2, Icons.analytics_outlined, Icons.analytics_rounded, 'Tren', isDarkBg ? const Color(0xFFFF9F64) : const Color(0xFFFF9F64)),
-                  _buildNavItem(3, Icons.settings_outlined, Icons.settings_rounded, 'Pengaturan', isDarkBg ? const Color(0xFFB39DDB) : const Color(0xFF9C27B0)),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
-    ),
-  ),
-  );
+    );
   }
 
-  Widget _buildNavItem(int index, IconData outlineIcon, IconData solidIcon, String label, Color themeColor) {
+  Widget _buildNavItem(
+    int index,
+    IconData outlineIcon,
+    IconData solidIcon,
+    String label,
+    Color themeColor,
+  ) {
     final isSelected = _currentIndex == index;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
@@ -587,18 +971,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: const Color(0xFF6C63FF).withOpacity(0.35),
               blurRadius: 12,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: AnimatedRotation(
           turns: _isMenuOpen ? 0.125 : 0.0,
           duration: const Duration(milliseconds: 250),
           curve: Curves.easeInOut,
-          child: const Icon(
-            Icons.add_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
         ),
       ),
     );
@@ -642,10 +1022,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 60,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            color.withOpacity(0.85),
-                            color,
-                          ],
+                          colors: [color.withOpacity(0.85), color],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -664,20 +1041,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        icon,
-                        color: Colors.white,
-                        size: 26,
-                      ),
+                      child: Icon(icon, color: Colors.white, size: 26),
                     ),
                     const SizedBox(height: 8),
                     // Dialog-like label bubble
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+                        border: Border.all(
+                          color: color.withOpacity(0.15),
+                          width: 1.5,
+                        ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.06),
@@ -705,7 +1084,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildHomeTab(BuildContext context, UserModel user, int paletteIdx, int emojiThemeIdx, bool isDarkBg) {
+  Widget _buildHomeTab(
+    BuildContext context,
+    UserModel user,
+    int paletteIdx,
+    int emojiThemeIdx,
+    bool isDarkBg,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Column(
@@ -730,6 +1115,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 24),
           _buildQuotesCard(isDarkBg),
           const SizedBox(height: 24),
+          HealthBannerCarousel(isDarkBg: isDarkBg),
+          const SizedBox(height: 24),
           _buildMoodTrackerCard(paletteIdx, emojiThemeIdx, user, isDarkBg),
           const SizedBox(height: 24),
           _buildBreathingCard(isDarkBg),
@@ -738,7 +1125,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildScreeningTab(BuildContext context, UserModel user, dynamic latestHistory, DiagnosticProvider diagnosticProvider, bool isDarkBg) {
+  Widget _buildScreeningTab(
+    BuildContext context,
+    UserModel user,
+    dynamic latestHistory,
+    DiagnosticProvider diagnosticProvider,
+    bool isDarkBg,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       child: Column(
@@ -746,15 +1139,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Text(
             'Sistem Pakar Deteksi Gejala',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: isDarkBg ? Colors.white : const Color(0xFF3F3D56)),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             'Lakukan peninjauan kesehatan mental Anda secara dini.',
-            style: TextStyle(fontSize: 14, color: isDarkBg ? Colors.white70 : const Color(0xFF707070)),
+            style: TextStyle(
+              fontSize: 14,
+              color: isDarkBg ? Colors.white70 : const Color(0xFF707070),
+            ),
           ),
           const SizedBox(height: 24),
-          _buildScreeningMainCard(context, latestHistory, diagnosticProvider, isDarkBg),
+          _buildScreeningMainCard(
+            context,
+            latestHistory,
+            diagnosticProvider,
+            isDarkBg,
+          ),
         ],
       ),
     );
@@ -786,7 +1191,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 : const Color(0xFF6C63FF).withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -804,9 +1209,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '"Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak."',
-                  style: TextStyle(
+                Text(
+                  '"$_currentQuote"',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                     fontStyle: FontStyle.italic,
@@ -828,11 +1233,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMoodTrackerCard(int paletteIdx, int emojiThemeIdx, UserModel user, bool isDarkBg) {
+  Widget _buildMoodTrackerCard(
+    int paletteIdx,
+    int emojiThemeIdx,
+    UserModel user,
+    bool isDarkBg,
+  ) {
     final cardBg = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
     final textColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
     final subtitleColor = isDarkBg ? Colors.white70 : const Color(0xFF707070);
-    final borderColor = isDarkBg ? Colors.white10 : const Color(0xFF6C63FF).withOpacity(0.03);
+    final borderColor = isDarkBg
+        ? Colors.white10
+        : const Color(0xFF6C63FF).withOpacity(0.03);
+    final moodProvider = Provider.of<MoodProvider>(context);
+    final isMoodLogged = _moodLoggedToday || moodProvider.hasLoggedMoodToday;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -844,21 +1258,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: Colors.black.withOpacity(isDarkBg ? 0.25 : 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
         border: Border.all(color: borderColor, width: 1.5),
       ),
-      child: _moodLoggedToday
+      child: isMoodLogged
           ? Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.green,
+                  size: 28,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Kamu sudah mencatat mood hari ini. Terima kasih telah peduli pada dirimu!',
-                    style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                )
+                ),
               ],
             )
           : Column(
@@ -872,11 +1293,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildMoodEmoji(1, 'Sangat Buruk', paletteIdx, emojiThemeIdx, isDarkBg),
-                    _buildMoodEmoji(2, 'Buruk', paletteIdx, emojiThemeIdx, isDarkBg),
-                    _buildMoodEmoji(3, 'Normal', paletteIdx, emojiThemeIdx, isDarkBg),
-                    _buildMoodEmoji(4, 'Baik', paletteIdx, emojiThemeIdx, isDarkBg),
-                    _buildMoodEmoji(5, 'Sangat Baik', paletteIdx, emojiThemeIdx, isDarkBg),
+                    _buildMoodEmoji(
+                      1,
+                      'Sangat Buruk',
+                      paletteIdx,
+                      emojiThemeIdx,
+                      isDarkBg,
+                    ),
+                    _buildMoodEmoji(
+                      2,
+                      'Buruk',
+                      paletteIdx,
+                      emojiThemeIdx,
+                      isDarkBg,
+                    ),
+                    _buildMoodEmoji(
+                      3,
+                      'Normal',
+                      paletteIdx,
+                      emojiThemeIdx,
+                      isDarkBg,
+                    ),
+                    _buildMoodEmoji(
+                      4,
+                      'Baik',
+                      paletteIdx,
+                      emojiThemeIdx,
+                      isDarkBg,
+                    ),
+                    _buildMoodEmoji(
+                      5,
+                      'Sangat Baik',
+                      paletteIdx,
+                      emojiThemeIdx,
+                      isDarkBg,
+                    ),
                   ],
                 ),
                 if (_selectedMoodLevel > 0) ...[
@@ -887,10 +1338,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     decoration: InputDecoration(
                       hintText: 'Ada cerita apa hari ini? (Catatan opsional)',
                       hintStyle: TextStyle(fontSize: 13, color: subtitleColor),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       filled: true,
-                      fillColor: isDarkBg ? Colors.white.withOpacity(0.05) : Colors.transparent,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      fillColor: isDarkBg
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.transparent,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
@@ -899,7 +1357,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.5),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF6C63FF),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -910,12 +1371,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       onPressed: _submitMood,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6C63FF),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Simpan Catatan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Simpan Catatan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  )
-                ]
+                  ),
+                ],
               ],
             ),
     );
@@ -944,7 +1413,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.black.withOpacity(isDarkBg ? 0.25 : 0.01),
               blurRadius: 10,
               offset: const Offset(0, 4),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -968,12 +1437,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     'Pemandu Latihan Pernapasan',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: titleColor),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: titleColor,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Latihan pernapasan 4-4-4-4 untuk menurunkan kecemasan dalam 1 menit.',
-                    style: TextStyle(fontSize: 12, color: subtitleColor, height: 1.3),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtitleColor,
+                      height: 1.3,
+                    ),
                   ),
                 ],
               ),
@@ -985,7 +1462,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildScreeningMainCard(BuildContext context, dynamic latestHistory, DiagnosticProvider diagnosticProvider, bool isDarkBg) {
+  Widget _buildScreeningMainCard(
+    BuildContext context,
+    dynamic latestHistory,
+    DiagnosticProvider diagnosticProvider,
+    bool isDarkBg,
+  ) {
     final cardBg = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
     final titleColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
     final bodyColor = isDarkBg ? Colors.white70 : const Color(0xFF505050);
@@ -1021,10 +1503,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00C9A7).withOpacity(isDarkBg ? 0.18 : 0.12),
+                  color: const Color(
+                    0xFF00C9A7,
+                  ).withOpacity(isDarkBg ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.psychology_alt_outlined, color: Color(0xFF00C9A7), size: 28),
+                child: const Icon(
+                  Icons.psychology_alt_outlined,
+                  color: Color(0xFF00C9A7),
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1033,16 +1521,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       'Skrining Mandiri',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: titleColor),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: titleColor,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Metode Forward Chaining',
-                      style: TextStyle(fontSize: 12, color: isDarkBg ? Colors.white54 : Colors.grey, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkBg ? Colors.white54 : Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -1054,7 +1550,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Divider(height: 32, color: dividerColor),
             Text(
               'Diagnosis Terakhir Anda:',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDarkBg ? Colors.white54 : Colors.grey),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isDarkBg ? Colors.white54 : Colors.grey,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
@@ -1088,7 +1588,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     latestHistory.deskripsi,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: bodyColor, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: bodyColor,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -1099,19 +1603,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                diagnosticProvider.resetScreening();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ScreeningScreen()),
-                );
+                _startScreeningTest(context, diagnosticProvider);
               },
               icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: const Text(
                 'Mulai Tes Diagnosis',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6C63FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 elevation: 0,
               ),
@@ -1122,7 +1629,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _selectReminderTime(BuildContext context, AuthProvider authProvider) async {
+  Future<void> _selectReminderTime(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: authProvider.selectedReminderTime,
@@ -1146,8 +1656,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showEditProfileDialog(BuildContext context, AuthProvider authProvider) {
-    final nameController = TextEditingController(text: authProvider.user?.name ?? '');
-    final photoUrlController = TextEditingController(text: authProvider.user?.photoUrl ?? '');
+    final nameController = TextEditingController(
+      text: authProvider.user?.name ?? '',
+    );
+    final photoUrlController = TextEditingController(
+      text: authProvider.user?.photoUrl ?? '',
+    );
     int selectedAvatarIndex = authProvider.user?.avatarIndex ?? 0;
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -1161,8 +1675,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           builder: (context, setModalState) {
             final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
             final textColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
-            final subtitleColor = isDarkBg ? Colors.white70 : const Color(0xFF707070);
-            
+            final subtitleColor = isDarkBg
+                ? Colors.white70
+                : const Color(0xFF707070);
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1170,13 +1686,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: isDarkBg ? const Color(0xFF16162D) : Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.15),
                       blurRadius: 20,
                       offset: const Offset(0, -5),
-                    )
+                    ),
                   ],
                 ),
                 padding: const EdgeInsets.all(28.0),
@@ -1222,9 +1740,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           physics: const BouncingScrollPhysics(),
                           itemCount: presetAvatars.length,
                           itemBuilder: (context, idx) {
-                            final isSelected = selectedAvatarIndex == idx && photoUrlController.text.trim().isEmpty;
+                            final isSelected =
+                                selectedAvatarIndex == idx &&
+                                photoUrlController.text.trim().isEmpty;
                             final avatar = presetAvatars[idx];
-                            
+
                             return GestureDetector(
                               onTap: () {
                                 setModalState(() {
@@ -1236,7 +1756,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 width: 56,
                                 height: 56,
-                                margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+                                margin: const EdgeInsets.only(
+                                  right: 12,
+                                  top: 4,
+                                  bottom: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   gradient: LinearGradient(
@@ -1245,23 +1769,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     end: Alignment.bottomRight,
                                   ),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
+                                    color: isSelected
+                                        ? const Color(0xFF6C63FF)
+                                        : Colors.transparent,
                                     width: 3,
                                   ),
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFF6C63FF).withOpacity(0.4),
+                                            color: const Color(
+                                              0xFF6C63FF,
+                                            ).withOpacity(0.4),
                                             blurRadius: 8,
                                             offset: const Offset(0, 3),
-                                          )
+                                          ),
                                         ]
                                       : [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
+                                            color: Colors.black.withOpacity(
+                                              0.05,
+                                            ),
                                             blurRadius: 4,
                                             offset: const Offset(0, 2),
-                                          )
+                                          ),
                                         ],
                                 ),
                                 child: Center(
@@ -1291,7 +1821,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: isDarkBg ? Colors.white.withOpacity(0.05) : const Color(0xFFF8F9FD),
+                              color: isDarkBg
+                                  ? Colors.white.withOpacity(0.05)
+                                  : const Color(0xFFF8F9FD),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: photoUrlController.text.trim().isNotEmpty
@@ -1301,7 +1833,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               image: photoUrlController.text.trim().isNotEmpty
                                   ? DecorationImage(
-                                      image: _getImageProvider(photoUrlController.text.trim()),
+                                      image: _getImageProvider(
+                                        photoUrlController.text.trim(),
+                                      ),
                                       fit: BoxFit.cover,
                                     )
                                   : null,
@@ -1332,22 +1866,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       });
                                     }
                                   },
-                                  icon: const Icon(Icons.photo_library_rounded, size: 16),
+                                  icon: const Icon(
+                                    Icons.photo_library_rounded,
+                                    size: 16,
+                                  ),
                                   label: const Text(
                                     'Pilih dari Galeri',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF6C63FF).withOpacity(0.12),
+                                    backgroundColor: const Color(
+                                      0xFF6C63FF,
+                                    ).withOpacity(0.12),
                                     foregroundColor: const Color(0xFF6C63FF),
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
                                   ),
                                 ),
-                                if (photoUrlController.text.trim().isNotEmpty) ...[
+                                if (photoUrlController.text
+                                    .trim()
+                                    .isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   TextButton.icon(
                                     onPressed: () {
@@ -1355,13 +1901,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         photoUrlController.clear();
                                       });
                                     },
-                                    icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 16,
+                                      color: Colors.redAccent,
+                                    ),
                                     label: const Text(
                                       'Hapus Foto Kustom',
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.redAccent,
+                                      ),
                                     ),
                                     style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1385,10 +1941,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         style: TextStyle(color: textColor, fontSize: 15),
                         decoration: InputDecoration(
                           hintText: 'Nama Lengkap',
-                          hintStyle: TextStyle(color: subtitleColor.withOpacity(0.6), fontSize: 14),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                          hintStyle: TextStyle(
+                            color: subtitleColor.withOpacity(0.6),
+                            fontSize: 14,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 16,
+                          ),
                           filled: true,
-                          fillColor: isDarkBg ? Colors.white.withOpacity(0.05) : const Color(0xFFF8F9FD),
+                          fillColor: isDarkBg
+                              ? Colors.white.withOpacity(0.05)
+                              : const Color(0xFFF8F9FD),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -1396,7 +1960,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: isDarkBg ? Colors.white10 : Colors.black.withOpacity(0.04),
+                              color: isDarkBg
+                                  ? Colors.white10
+                                  : Colors.black.withOpacity(0.04),
                               width: 1.5,
                             ),
                           ),
@@ -1430,16 +1996,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: isSaving ? null : () => Navigator.pop(context),
+                              onPressed: isSaving
+                                  ? null
+                                  : () => Navigator.pop(context),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color: isDarkBg ? Colors.white30 : Colors.grey.withOpacity(0.3),
+                                  color: isDarkBg
+                                      ? Colors.white30
+                                      : Colors.grey.withOpacity(0.3),
                                   width: 1.2,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               child: Text(
                                 'Batal',
@@ -1460,20 +2032,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         setModalState(() {
                                           isSaving = true;
                                         });
-                                        
-                                        final success = await authProvider.updateProfile(
-                                          nameController.text.trim(),
-                                          selectedAvatarIndex,
-                                          photoUrlController.text.trim(),
-                                        );
-                                        
+
+                                        final success = await authProvider
+                                            .updateProfile(
+                                              nameController.text.trim(),
+                                              selectedAvatarIndex,
+                                              photoUrlController.text.trim(),
+                                            );
+
                                         if (success) {
                                           if (context.mounted) {
                                             Navigator.pop(context);
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               const SnackBar(
-                                                content: Text('Profil berhasil diperbarui!'),
-                                                backgroundColor: Color(0xFF00C9A7),
+                                                content: Text(
+                                                  'Profil berhasil diperbarui!',
+                                                ),
+                                                backgroundColor: Color(
+                                                  0xFF00C9A7,
+                                                ),
                                               ),
                                             );
                                           }
@@ -1482,10 +2061,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             isSaving = false;
                                           });
                                           if (context.mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
                                               const SnackBar(
-                                                content: Text('Gagal memperbarui profil.'),
-                                                backgroundColor: Colors.redAccent,
+                                                content: Text(
+                                                  'Gagal memperbarui profil.',
+                                                ),
+                                                backgroundColor:
+                                                    Colors.redAccent,
                                               ),
                                             );
                                           }
@@ -1499,7 +2083,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               child: isSaving
                                   ? const SizedBox(
@@ -1512,7 +2098,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     )
                                   : const Text(
                                       'Simpan',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                             ),
                           ),
@@ -1529,7 +2117,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSettingsTab(BuildContext context, UserModel user, AuthProvider authProvider) {
+  Widget _buildSettingsTab(
+    BuildContext context,
+    UserModel user,
+    AuthProvider authProvider,
+  ) {
     final paletteIdx = authProvider.selectedPaletteIndex;
     final primaryColor = MoodThemeHelper.getMoodColor(paletteIdx, 4);
     final isPremium = authProvider.isPremium;
@@ -1552,10 +2144,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.black.withOpacity(0.01),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
-                  )
+                  ),
                 ],
                 border: Border.all(
-                  color: isDarkBg ? Colors.white10 : Colors.black12.withOpacity(0.05),
+                  color: isDarkBg
+                      ? Colors.white10
+                      : Colors.black12.withOpacity(0.05),
                   width: 1.5,
                 ),
               ),
@@ -1568,7 +2162,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF),
+                              color: isDarkBg
+                                  ? const Color(0xFF00C9A7)
+                                  : const Color(0xFF6C63FF),
                               width: 2.5,
                             ),
                             boxShadow: [
@@ -1576,7 +2172,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 color: Colors.black.withOpacity(0.08),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
-                              )
+                              ),
                             ],
                             image: DecorationImage(
                               image: _getImageProvider(user.photoUrl),
@@ -1590,16 +2186,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
-                              colors: presetAvatars[user.avatarIndex].gradientColors,
+                              colors: presetAvatars[user.avatarIndex]
+                                  .gradientColors,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: presetAvatars[user.avatarIndex].gradientColors[0].withOpacity(0.3),
+                                color: presetAvatars[user.avatarIndex]
+                                    .gradientColors[0]
+                                    .withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
-                              )
+                              ),
                             ],
                           ),
                           child: Center(
@@ -1619,7 +2218,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+                            color: isDarkBg
+                                ? Colors.white
+                                : const Color(0xFF3F3D56),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1632,13 +2233,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: isPremium
                                 ? const Color(0xFFFFD54F).withOpacity(0.2)
                                 : isDarkBg
-                                    ? Colors.white.withOpacity(0.08)
-                                    : Colors.grey.withOpacity(0.12),
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.grey.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -1649,8 +2253,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: isPremium
                                   ? const Color(0xFFFFD54F)
                                   : isDarkBg
-                                      ? Colors.white70
-                                      : Colors.black54,
+                                  ? Colors.white70
+                                  : Colors.black54,
                             ),
                           ),
                         ),
@@ -1698,17 +2302,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: DropdownButton<int>(
                 value: authProvider.selectedBackgroundThemeIndex,
                 underline: const SizedBox.shrink(),
-                dropdownColor: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
-                iconEnabledColor: isDarkBg ? Colors.white70 : const Color(0xFF3F3D56),
+                dropdownColor: isDarkBg
+                    ? const Color(0xFF1E1E38)
+                    : Colors.white,
+                iconEnabledColor: isDarkBg
+                    ? Colors.white70
+                    : const Color(0xFF3F3D56),
                 style: TextStyle(
                   color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
                 items: [
-                  DropdownMenuItem(value: 0, child: Text('Doodle', style: TextStyle(color: isDarkBg ? Colors.white : const Color(0xFF3F3D56)))),
-                  DropdownMenuItem(value: 1, child: Text('Cairan', style: TextStyle(color: isDarkBg ? Colors.white : const Color(0xFF3F3D56)))),
-                  DropdownMenuItem(value: 2, child: Text('Malam', style: TextStyle(color: isDarkBg ? Colors.white : const Color(0xFF3F3D56)))),
+                  DropdownMenuItem(
+                    value: 0,
+                    child: Text(
+                      'Doodle',
+                      style: TextStyle(
+                        color: isDarkBg
+                            ? Colors.white
+                            : const Color(0xFF3F3D56),
+                      ),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 1,
+                    child: Text(
+                      'Cairan',
+                      style: TextStyle(
+                        color: isDarkBg
+                            ? Colors.white
+                            : const Color(0xFF3F3D56),
+                      ),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 2,
+                    child: Text(
+                      'Malam',
+                      style: TextStyle(
+                        color: isDarkBg
+                            ? Colors.white
+                            : const Color(0xFF3F3D56),
+                      ),
+                    ),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -1736,7 +2374,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             subtitle: 'Atur jam notifikasi jurnal harian Anda',
             trailing: Text(
               authProvider.selectedReminderTime.format(context),
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6C63FF)),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF6C63FF),
+              ),
             ),
             onTap: () => _selectReminderTime(context, authProvider),
           ),
@@ -1750,10 +2391,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
-                    final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
-                    final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
-                    final titleTextColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
-                    final subtitleTextColor = isDarkBg ? Colors.white70 : const Color(0xFF707070);
+                    final isDarkBg =
+                        authProvider.selectedBackgroundThemeIndex == 2;
+                    final dialogBgColor = isDarkBg
+                        ? const Color(0xFF1E1E38)
+                        : Colors.white;
+                    final titleTextColor = isDarkBg
+                        ? Colors.white
+                        : const Color(0xFF3F3D56);
+                    final subtitleTextColor = isDarkBg
+                        ? Colors.white70
+                        : const Color(0xFF707070);
 
                     return Dialog(
                       backgroundColor: Colors.transparent,
@@ -1763,15 +2411,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: dialogBgColor,
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: isDarkBg ? Colors.white10 : Colors.black.withOpacity(0.05),
+                            color: isDarkBg
+                                ? Colors.white10
+                                : Colors.black.withOpacity(0.05),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(isDarkBg ? 0.4 : 0.08),
+                              color: Colors.black.withOpacity(
+                                isDarkBg ? 0.4 : 0.08,
+                              ),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
-                            )
+                            ),
                           ],
                         ),
                         child: Padding(
@@ -1787,8 +2439,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
-                                  Icons.logout_rounded, 
-                                  color: Colors.redAccent, 
+                                  Icons.logout_rounded,
+                                  color: Colors.redAccent,
                                   size: 30,
                                 ),
                               ),
@@ -1824,16 +2476,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         onPressed: () => Navigator.pop(context),
                                         style: OutlinedButton.styleFrom(
                                           side: BorderSide(
-                                            color: isDarkBg ? Colors.white12 : Colors.black12,
+                                            color: isDarkBg
+                                                ? Colors.white12
+                                                : Colors.black12,
                                           ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                         ),
                                         child: Text(
                                           'Batal',
                                           style: TextStyle(
-                                            color: isDarkBg ? Colors.white70 : const Color(0xFF505050),
+                                            color: isDarkBg
+                                                ? Colors.white70
+                                                : const Color(0xFF505050),
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
                                           ),
@@ -1855,7 +2513,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           foregroundColor: Colors.white,
                                           elevation: 0,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                           ),
                                         ),
                                         child: const Text(
@@ -1881,11 +2541,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: const Icon(Icons.logout_rounded, color: Colors.white),
               label: const Text(
                 'Keluar dari Akun',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
             ),
@@ -1905,7 +2570,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
@@ -1919,7 +2584,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: Colors.black.withOpacity(isDarkBg ? 0.2 : 0.005),
             blurRadius: 5,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: ListTile(
@@ -1936,28 +2601,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: Text(
           title,
           style: TextStyle(
-            fontSize: 14, 
-            fontWeight: FontWeight.bold, 
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
             color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
           ),
         ),
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            fontSize: 11, 
+            fontSize: 11,
             color: isDarkBg ? Colors.white70 : Colors.grey,
           ),
         ),
-        trailing: trailing ?? Icon(Icons.arrow_forward_ios_rounded, size: 12, color: isDarkBg ? Colors.white70 : Colors.grey),
+        trailing:
+            trailing ??
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 12,
+              color: isDarkBg ? Colors.white70 : Colors.grey,
+            ),
       ),
     );
   }
 
-  Widget _buildMoodEmoji(int level, String label, int paletteIndex, int emojiThemeIndex, bool isDarkBg) {
+  Widget _buildMoodEmoji(
+    int level,
+    String label,
+    int paletteIndex,
+    int emojiThemeIndex,
+    bool isDarkBg,
+  ) {
     bool isSelected = _selectedMoodLevel == level;
     final themeColor = MoodThemeHelper.getMoodColor(paletteIndex, level);
     final unselectedColor = isDarkBg ? Colors.white38 : Colors.black45;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -1981,8 +2658,141 @@ class _DashboardScreenState extends State<DashboardScreen> {
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected ? themeColor : unselectedColor,
             ),
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAdminStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF64748B),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFF94A3B8),
+                  size: 14,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1996,7 +2806,8 @@ class BreathingModal extends StatefulWidget {
   State<BreathingModal> createState() => _BreathingModalState();
 }
 
-class _BreathingModalState extends State<BreathingModal> with SingleTickerProviderStateMixin {
+class _BreathingModalState extends State<BreathingModal>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   String _guideText = "Tarik Napas";
@@ -2014,11 +2825,23 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
 
     _animation = TweenSequence<double>([
       // Tarik napas: membesar dari 1.0 ke 2.0 (4s)
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.8).chain(CurveTween(curve: Curves.easeInOut)), weight: 25),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 1.8,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
       // Tahan: tetap besar (4s)
       TweenSequenceItem(tween: ConstantTween(1.8), weight: 25),
       // Hembuskan: mengecil kembali ke 1.0 (4s)
-      TweenSequenceItem(tween: Tween(begin: 1.8, end: 1.0).chain(CurveTween(curve: Curves.easeInOut)), weight: 25),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.8,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 25,
+      ),
       // Tahan: tetap kecil (4s)
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 25),
     ]).animate(_controller);
@@ -2103,9 +2926,13 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.close_rounded, size: 24, color: closeIconColor),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 24,
+                  color: closeIconColor,
+                ),
                 onPressed: () => Navigator.pop(context),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -2122,7 +2949,9 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
               animation: _animation,
               builder: (context, child) {
                 double val = _animation.value;
-                final ringColor = isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF);
+                final ringColor = isDarkBg
+                    ? const Color(0xFF00C9A7)
+                    : const Color(0xFF6C63FF);
                 final gradientColors = isDarkBg
                     ? [const Color(0xFF00C9A7), const Color(0xFF0088A9)]
                     : [const Color(0xFF6C63FF), const Color(0xFF8F8AFF)];
@@ -2135,7 +2964,9 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
                       width: 120 * val,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: ringColor.withOpacity(0.08 * (val - 0.5).clamp(0, 1)),
+                        color: ringColor.withOpacity(
+                          0.08 * (val - 0.5).clamp(0, 1),
+                        ),
                       ),
                     ),
                     // Middle ring
@@ -2203,13 +3034,21 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                backgroundColor: isDarkBg
+                    ? const Color(0xFF00C9A7)
+                    : const Color(0xFF6C63FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
               child: const Text(
                 'Selesai',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -2218,3 +3057,248 @@ class _BreathingModalState extends State<BreathingModal> with SingleTickerProvid
     );
   }
 }
+
+// Model kelas untuk Tips Kesehatan
+class HealthTip {
+  final String title;
+  final String description;
+  final String emoji;
+  final List<Color> colors;
+
+  const HealthTip({
+    required this.title,
+    required this.description,
+    required this.emoji,
+    required this.colors,
+  });
+}
+
+const List<HealthTip> healthTips = [
+  HealthTip(
+    title: 'Kelola Stres Anda',
+    description: 'Sempatkan 5 menit untuk Box Breathing jika Anda merasa kewalahan.',
+    emoji: '🧘‍♀️',
+    colors: [Color(0xFF8B5CF6), Color(0xFF6C63FF)],
+  ),
+  HealthTip(
+    title: 'Tidur yang Cukup',
+    description: 'Tidur 7-8 jam membantu meregenerasi sel otak dan menstabilkan emosi.',
+    emoji: '😴',
+    colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+  ),
+  HealthTip(
+    title: 'Ekspresikan Perasaan',
+    description: 'Menulis jurnal mood harian sangat baik untuk meluapkan beban pikiran.',
+    emoji: '📝',
+    colors: [Color(0xFF10B981), Color(0xFF047857)],
+  ),
+  HealthTip(
+    title: 'Koneksi Sosial',
+    description: 'Berbagi cerita dengan orang terdekat dapat mengurangi kecemasan.',
+    emoji: '🤗',
+    colors: [Color(0xFFFF9F64), Color(0xFFFF7043)],
+  ),
+];
+
+// Widget Carousel Banner Tips Kesehatan
+class HealthBannerCarousel extends StatefulWidget {
+  final bool isDarkBg;
+  const HealthBannerCarousel({super.key, required this.isDarkBg});
+
+  @override
+  State<HealthBannerCarousel> createState() => _HealthBannerCarouselState();
+}
+
+class _HealthBannerCarouselState extends State<HealthBannerCarousel> {
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _startAutoScroll();
+  }
+
+  void _startAutoScroll() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        int nextPage = _currentPage + 1;
+        if (nextPage >= healthTips.length) {
+          nextPage = 0;
+        }
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 125,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemCount: healthTips.length,
+            itemBuilder: (context, index) {
+              final tip = healthTips[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: widget.isDarkBg 
+                        ? [tip.colors[0].withOpacity(0.4), tip.colors[1].withOpacity(0.4)]
+                        : tip.colors,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: widget.isDarkBg
+                      ? Border.all(color: Colors.white.withOpacity(0.12), width: 1.5)
+                      : null,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (widget.isDarkBg ? Colors.black : tip.colors[0]).withOpacity(widget.isDarkBg ? 0.3 : 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    children: [
+                      // Lingkaran dekoratif latar belakang
+                      Positioned(
+                        right: -20,
+                        top: -20,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 30,
+                        bottom: -40,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.06),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                      
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'TIPS KESEHATAN',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    tip.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    tip.description,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.85),
+                                      fontSize: 11.5,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              tip.emoji,
+                              style: const TextStyle(fontSize: 48),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Dots indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(healthTips.length, (index) {
+            final isActive = _currentPage == index;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 6,
+              width: isActive ? 16 : 6,
+              decoration: BoxDecoration(
+                color: isActive 
+                    ? (widget.isDarkBg ? const Color(0xFF00C9A7) : const Color(0xFF6C63FF))
+                    : (widget.isDarkBg ? Colors.white24 : Colors.black12),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/symptom_model.dart';
 import '../models/disease_model.dart';
@@ -6,8 +7,11 @@ import '../models/history_model.dart';
 import '../models/user_model.dart';
 import '../services/firestore_service.dart';
 import '../services/expert_system_service.dart';
+import '../services/auth_service.dart';
 
 class DiagnosticProvider extends ChangeNotifier {
+  StreamSubscription<List<UserModel>>? _usersSubscription;
+  StreamSubscription<List<HistoryModel>>? _historySubscription;
   final FirestoreService _dbService = FirestoreService();
 
   List<SymptomModel> _symptoms = [];
@@ -33,9 +37,16 @@ class DiagnosticProvider extends ChangeNotifier {
   List<String> get selectedSymptomCodes => _selectedSymptomCodes;
   bool get isLoading => _isLoading;
   DiseaseModel? get latestDiagnosis => _latestDiagnosis;
-  bool get inferenceCompleted => _inferenceCompleted;
+  bool get hasTestedToday {
+    if (_historyList.isEmpty) return false;
+    final now = DateTime.now();
+    return _historyList.any((history) {
+      final date = history.tanggal;
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    });
+  }
 
-  // Memuat data analitik admin
+  // Memuat data analitik admin (one-time read fallback)
   Future<void> loadAdminData() async {
     _isLoading = true;
     notifyListeners();
@@ -48,6 +59,49 @@ class DiagnosticProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  // Memantau data analitik secara real-time
+  void listenToAdminData() {
+    _usersSubscription?.cancel();
+    _historySubscription?.cancel();
+
+    _isLoading = true;
+    notifyListeners();
+
+    _usersSubscription = _dbService.getUsersStream().listen(
+      (users) {
+        _allUsers = users;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        debugPrint("Error mendengarkan stream pengguna: $e");
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+
+    _historySubscription = _dbService.getHistoryStream().listen(
+      (histories) {
+        _allHistories = histories;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        debugPrint("Error mendengarkan stream riwayat: $e");
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+
+  // Menghentikan pemantauan data real-time
+  void cancelAdminListeners() {
+    _usersSubscription?.cancel();
+    _usersSubscription = null;
+    _historySubscription?.cancel();
+    _historySubscription = null;
   }
 
   // Memuat data awal dari database
@@ -223,5 +277,29 @@ class DiagnosticProvider extends ChangeNotifier {
     await _dbService.deleteRule(id);
     _rules = await _dbService.getRules();
     notifyListeners();
+  }
+
+  // --- Register New Admin ---
+  Future<void> registerNewAdmin(String name, String email, String password) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final authService = AuthService();
+      await authService.registerNewAdmin(name, email, password);
+      // Data ter-update secara otomatis jika real-time stream aktif, 
+      // tetapi untuk keamanan pemicu manual one-time fallback:
+      if (_usersSubscription == null) {
+        _allUsers = await _dbService.getAllUsers();
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    cancelAdminListeners();
+    super.dispose();
   }
 }

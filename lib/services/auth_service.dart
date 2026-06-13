@@ -172,6 +172,58 @@ class AuthService {
     }
   }
 
+  // Registrasi Admin Baru tanpa Log Out Admin yang sedang aktif
+  Future<UserModel> registerNewAdmin(String name, String email, String password) async {
+    if (_useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (_mockUsers.any((u) => u.email.trim().toLowerCase() == email.trim().toLowerCase())) {
+        throw Exception("Email sudah terdaftar.");
+      }
+      final newAdmin = UserModel(
+        uid: 'mock-admin-${DateTime.now().millisecondsSinceEpoch}',
+        email: email.trim(),
+        name: name.trim(),
+        role: 'admin',
+        createdAt: DateTime.now(),
+      );
+      _mockUsers.add(newAdmin);
+      return newAdmin;
+    } else {
+      final String tempAppName = 'TempAdminReg-${DateTime.now().millisecondsSinceEpoch}';
+      final FirebaseApp tempApp = await Firebase.initializeApp(
+        name: tempAppName,
+        options: Firebase.app().options,
+      );
+      
+      try {
+        final FirebaseAuth tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+        final credential = await tempAuth.createUserWithEmailAndPassword(
+          email: email.trim(),
+          password: password,
+        );
+        
+        final firebaseUser = credential.user;
+        if (firebaseUser == null) {
+          throw Exception('Gagal membuat akun admin baru.');
+        }
+        
+        final newAdmin = UserModel(
+          uid: firebaseUser.uid,
+          email: email.trim(),
+          name: name.trim(),
+          role: 'admin',
+          createdAt: DateTime.now(),
+        );
+        
+        await _saveUserProfile(newAdmin);
+        await firebaseUser.updateDisplayName(name.trim());
+        return newAdmin;
+      } finally {
+        await tempApp.delete();
+      }
+    }
+  }
+
   // Logout
   Future<void> signOut() async {
     if (_useMock) {

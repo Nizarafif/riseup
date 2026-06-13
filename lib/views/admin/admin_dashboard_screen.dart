@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui' show ImageFilter;
+import 'package:intl/intl.dart';
 import '../../providers/diagnostic_provider.dart';
 import '../auth/widgets/doodle_background.dart';
+import '../../models/disease_model.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final int initialTabIndex;
+  const AdminDashboardScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -13,15 +16,26 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late DiagnosticProvider _diagnosticProvider;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTabIndex);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _diagnosticProvider.listenToAdminData();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
   }
 
   @override
   void dispose() {
+    _diagnosticProvider.cancelAdminListeners();
     _tabController.dispose();
     super.dispose();
   }
@@ -370,6 +384,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final symptoms = diagnosticProvider.symptoms;
     final rules = diagnosticProvider.rules;
+    final diseases = diagnosticProvider.diseases;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -402,6 +417,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     children: [
                       _buildSymptomsManager(symptoms, diagnosticProvider),
                       _buildRulesManager(rules, diagnosticProvider),
+                      _buildDiseasesManager(diseases, diagnosticProvider),
+                      _buildStatsAndTrends(diagnosticProvider),
                     ],
                   ),
                 ),
@@ -634,12 +651,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
           labelColor: const Color(0xFF1E293B),
           unselectedLabelColor: const Color(0xFF64748B),
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
           indicatorSize: TabBarIndicatorSize.tab,
           dividerColor: Colors.transparent,
           tabs: const [
-            Tab(text: 'Kelola Gejala'),
-            Tab(text: 'Kelola Aturan'),
+            Tab(text: 'Gejala'),
+            Tab(text: 'Aturan'),
+            Tab(text: 'Diagnosis'),
+            Tab(text: 'Statistik'),
           ],
         ),
       ),
@@ -964,6 +983,754 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
         );
       },
+    );
+  }
+
+  void _showAddDiseaseDialog() {
+    final codeController = TextEditingController();
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final solutionsController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF9F64).withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.psychology_rounded, color: Color(0xFFFF9F64), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Tambah Diagnosis Baru',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Color(0xFFF1F5F9), thickness: 1, height: 24),
+                    const SizedBox(height: 4),
+                    TextFormField(
+                      controller: codeController,
+                      decoration: InputDecoration(
+                        labelText: 'Kode Diagnosis',
+                        hintText: 'Contoh: P005',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      validator: (val) => val == null || val.isEmpty ? 'Kode tidak boleh kosong' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Nama Gangguan',
+                        hintText: 'Contoh: Gangguan Kecemasan',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      validator: (val) => val == null || val.isEmpty ? 'Nama tidak boleh kosong' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        labelText: 'Deskripsi',
+                        hintText: 'Masukkan penjelasan mengenai gangguan ini',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      maxLines: 3,
+                      validator: (val) => val == null || val.isEmpty ? 'Deskripsi tidak boleh kosong' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: solutionsController,
+                      decoration: InputDecoration(
+                        labelText: 'Solusi / Tips (Pisahkan dengan koma)',
+                        hintText: 'Contoh: Olahraga, Istirahat, Konsultasi',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      maxLines: 2,
+                      validator: (val) => val == null || val.isEmpty ? 'Solusi tidak boleh kosong' : null,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              final List<String> solList = solutionsController.text
+                                  .split(',')
+                                  .map((s) => s.trim())
+                                  .where((s) => s.isNotEmpty)
+                                  .toList();
+                              
+                              await Provider.of<DiagnosticProvider>(context, listen: false).addDisease(
+                                codeController.text.trim().toUpperCase(),
+                                nameController.text.trim(),
+                                descriptionController.text.trim(),
+                                solList,
+                              );
+                              
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Diagnosis baru berhasil disimpan!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C63FF),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddAdminDialog() {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF6C63FF).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.person_add_rounded, color: Color(0xFF6C63FF), size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Tambah Admin / Pakar Baru',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        const Divider(color: Color(0xFFF1F5F9), thickness: 1, height: 24),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: nameController,
+                          enabled: !isSubmitting,
+                          decoration: InputDecoration(
+                            labelText: 'Nama Lengkap',
+                            hintText: 'Contoh: Dr. Rudi H.',
+                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF64748B)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          validator: (val) => val == null || val.trim().isEmpty ? 'Nama tidak boleh kosong' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailController,
+                          enabled: !isSubmitting,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            labelText: 'Email',
+                            hintText: 'Contoh: rudi@riseup.com',
+                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF64748B)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) return 'Email tidak boleh kosong';
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(val.trim())) {
+                              return 'Format email tidak valid';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: passwordController,
+                          enabled: !isSubmitting,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Minimal 6 karakter',
+                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return 'Password tidak boleh kosong';
+                            if (val.length < 6) return 'Password minimal 6 karakter';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: isSubmitting ? null : () => Navigator.pop(context),
+                              child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      if (formKey.currentState!.validate()) {
+                                        setState(() {
+                                          isSubmitting = true;
+                                        });
+                                        try {
+                                          await Provider.of<DiagnosticProvider>(context, listen: false)
+                                              .registerNewAdmin(
+                                            nameController.text.trim(),
+                                            emailController.text.trim(),
+                                            passwordController.text,
+                                          );
+                                          if (context.mounted) {
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Admin baru berhasil terdaftar!'),
+                                                backgroundColor: Colors.green,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          setState(() {
+                                            isSubmitting = false;
+                                          });
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Gagal mendaftarkan admin: ${e.toString().replaceAll('Exception: ', '')}'),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6C63FF),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDiseasesManager(List<DiseaseModel> diseases, DiagnosticProvider diagnosticProvider) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Daftar Diagnosis & Gangguan',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 15),
+              ),
+              ElevatedButton.icon(
+                onPressed: _showAddDiseaseDialog,
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Tambah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF9F64),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: diseases.isEmpty
+              ? _buildEmptyStateWidget('Belum ada data diagnosis. Gunakan tombol awan di header untuk memuat data default.')
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: diseases.length,
+                  itemBuilder: (context, index) {
+                    final disease = diseases[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE0F2FE),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        disease.code,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0369A1), fontSize: 10, letterSpacing: 0.5),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      disease.name,
+                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                    ),
+                                  ],
+                                ),
+                                GestureDetector(
+                                  onTap: () async {
+                                    final confirm = await _showConfirmDeleteDialog('Diagnosis ${disease.code}');
+                                    if (confirm == true) {
+                                      await diagnosticProvider.deleteDisease(disease.id);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFFFF1F2),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(color: Color(0xFFF1F5F9), height: 20),
+                            Text(
+                              disease.description,
+                              style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569), height: 1.4),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Rekomendasi Tindakan / Solusi:',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF64748B)),
+                            ),
+                            const SizedBox(height: 6),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: disease.solutions.map((sol) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 4, right: 6),
+                                        child: Icon(Icons.circle, size: 5, color: Color(0xFFFF9F64)),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          sol,
+                                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF334155)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsAndTrends(DiagnosticProvider diagnosticProvider) {
+    if (diagnosticProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final users = diagnosticProvider.allUsers;
+    final histories = diagnosticProvider.allHistories;
+    
+    // Hitung persentase tiap hasil diagnosis
+    final Map<String, int> distribution = {};
+    for (var h in histories) {
+      final key = h.hasilDiagnosis;
+      distribution[key] = (distribution[key] ?? 0) + 1;
+    }
+
+    final int totalTests = histories.length;
+
+    // Filter daftar pengguna role "user" saja agar tidak menampilkan admin
+    final listUsers = users.where((u) => u.role != 'admin').toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Kartu indikator ringkasan
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniStatCard(
+                  icon: Icons.people_alt_rounded,
+                  title: 'Total Pengguna',
+                  value: '${listUsers.length}',
+                  color: Colors.blueAccent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMiniStatCard(
+                  icon: Icons.history_edu_rounded,
+                  title: 'Total Skrining',
+                  value: '$totalTests',
+                  color: const Color(0xFF6C63FF),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Bagian Distribusi Diagnosis
+          const Text(
+            'Distribusi Diagnosis Skrining',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: totalTests == 0
+                ? const Center(
+                    child: Text(
+                      'Belum ada data riwayat skrining dari pengguna.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  )
+                : Column(
+                    children: distribution.entries.map((entry) {
+                      final name = entry.key;
+                      final count = entry.value;
+                      final percent = (count / totalTests * 100).toStringAsFixed(1);
+                      final double fraction = count / totalTests;
+                      
+                      // Berikan warna khusus berdasarkan jenis diagnosis
+                      Color progressColor = const Color(0xFF6C63FF);
+                      if (name.contains('Berat') || name.contains('Depresi')) {
+                        progressColor = Colors.redAccent;
+                      } else if (name.contains('Sedang')) {
+                        progressColor = Colors.orangeAccent;
+                      } else if (name.contains('Normal') || name.contains('Sehat')) {
+                        progressColor = Colors.green;
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF334155)),
+                                ),
+                                Text(
+                                  '$count kasus ($percent%)',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: fraction,
+                                minHeight: 8,
+                                backgroundColor: const Color(0xFFE2E8F0),
+                                valueColor: AlwaysStoppedAnimation<Color>(progressColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          const SizedBox(height: 20),
+
+          // Bagian Daftar Monitoring Pengguna
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Monitoring Pengguna',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E293B)),
+              ),
+              ElevatedButton.icon(
+                onPressed: _showAddAdminDialog,
+                icon: const Icon(Icons.person_add_rounded, size: 16),
+                label: const Text('Tambah Admin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          listUsers.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(20),
+                  alignment: Alignment.center,
+                  child: const Text('Belum ada pengguna terdaftar.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: listUsers.length,
+                  itemBuilder: (context, idx) {
+                    final u = listUsers[idx];
+                    
+                    // Temukan riwayat tes terbaru pengguna ini
+                    final userHistories = histories.where((h) => h.userId == u.uid).toList();
+                    String lastResult = 'Belum pernah tes';
+                    Color resultColor = const Color(0xFF64748B);
+                    
+                    if (userHistories.isNotEmpty) {
+                      // Urutkan berdasarkan tanggal terbaru
+                      userHistories.sort((a, b) => b.tanggal.compareTo(a.tanggal));
+                      final latest = userHistories.first;
+                      lastResult = latest.hasilDiagnosis;
+                      
+                      if (lastResult.contains('Berat') || lastResult.contains('Depresi')) {
+                        resultColor = Colors.redAccent;
+                      } else if (lastResult.contains('Sedang')) {
+                        resultColor = Colors.orangeAccent;
+                      } else if (lastResult.contains('Normal') || lastResult.contains('Sehat')) {
+                        resultColor = Colors.green;
+                      } else {
+                        resultColor = const Color(0xFF6C63FF);
+                      }
+                    }
+
+                    final String joinDate = DateFormat('dd MMM yyyy, HH:mm').format(u.createdAt);
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF).withOpacity(0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.person_outline_rounded, color: Color(0xFF6C63FF)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  u.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  u.email,
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Gabung: $joinDate',
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: resultColor.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              lastResult,
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: resultColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

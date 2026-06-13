@@ -11,6 +11,15 @@ class MoodProvider extends ChangeNotifier {
   List<MoodModel> get moods => _moods;
   bool get isLoading => _isLoading;
 
+  bool get hasLoggedMoodToday {
+    if (_moods.isEmpty) return false;
+    final now = DateTime.now();
+    return _moods.any((mood) {
+      final date = mood.tanggal;
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    });
+  }
+
   // Mengambil data mood pengguna
   Future<void> fetchMoods(String userId) async {
     _isLoading = true;

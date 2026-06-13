@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
@@ -92,6 +93,60 @@ class FirestoreService {
   final List<HistoryModel> _mockHistory = [];
   final List<MoodModel> _mockMoods = [];
 
+  // StreamControllers untuk real-time update dalam mode Mock
+  final StreamController<List<UserModel>> _mockUsersController = StreamController<List<UserModel>>.broadcast();
+  final StreamController<List<HistoryModel>> _mockHistoryController = StreamController<List<HistoryModel>>.broadcast();
+
+  void _updateMockUsersStream() {
+    if (_mockUsers.isEmpty) {
+      _mockUsers.addAll([
+        UserModel(uid: 'user-1', email: 'budi@gmail.com', name: 'Budi Santoso', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 5))),
+        UserModel(uid: 'user-2', email: 'siti@yahoo.com', name: 'Siti Aminah', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 4))),
+        UserModel(uid: 'user-3', email: 'rudi@riseup.com', name: 'Rudi Wijaya', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 3))),
+        UserModel(uid: 'user-4', email: 'ani@gmail.com', name: 'Ani Lestari', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 2))),
+      ]);
+    }
+    _mockUsersController.add(List.from(_mockUsers));
+  }
+
+  void _updateMockHistoryStream() {
+    if (_mockHistory.isEmpty) {
+      _mockHistory.addAll([
+        HistoryModel(
+          id: 'h-1',
+          userId: 'user-1',
+          tanggal: DateTime.now().subtract(const Duration(hours: 4)),
+          gejalaDipilih: ['G001', 'G002', 'G003'],
+          hasilDiagnosis: 'Stress Ringan',
+          diagnosisCode: 'P001',
+          deskripsi: 'Kondisi di mana Anda mengalami tekanan emosional ringan.',
+          solusi: ['Lakukan latihan relaksasi pernapasan.', 'Tulis jurnal mood.'],
+        ),
+        HistoryModel(
+          id: 'h-2',
+          userId: 'user-2',
+          tanggal: DateTime.now().subtract(const Duration(hours: 12)),
+          gejalaDipilih: ['G004', 'G005', 'G006'],
+          hasilDiagnosis: 'Stress Sedang',
+          diagnosisCode: 'P002',
+          deskripsi: 'Mengalami tekanan mental sedang.',
+          solusi: ['Lakukan hobi.', 'Ceritakan beban pikiran.'],
+        ),
+        HistoryModel(
+          id: 'h-3',
+          userId: 'user-3',
+          tanggal: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+          gejalaDipilih: ['G010', 'G011', 'G012'],
+          hasilDiagnosis: 'Depresi',
+          diagnosisCode: 'P004',
+          deskripsi: 'Menunjukkan indikasi depresi.',
+          solusi: ['Konsultasi dengan Psikolog.', 'Ikuti terapi CBT.'],
+        ),
+      ]);
+    }
+    _mockHistoryController.add(List.from(_mockHistory)..sort((a, b) => b.tanggal.compareTo(a.tanggal)));
+  }
+
   bool get useMock => _useMock;
 
   Future<void> initialize() async {
@@ -145,6 +200,7 @@ class FirestoreService {
     if (_useMock) {
       _mockUsers.removeWhere((u) => u.uid == user.uid);
       _mockUsers.add(user);
+      _updateMockUsersStream();
     } else {
       await _db!.collection('users').doc(user.uid).set(user.toMap());
     }
@@ -239,6 +295,28 @@ class FirestoreService {
     } else {
       final snap = await _db!.collection('riwayat_tes').orderBy('tanggal', descending: true).get();
       return snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList();
+    }
+  }
+
+  // Stream users untuk update real-time
+  Stream<List<UserModel>> getUsersStream() {
+    if (_useMock) {
+      _updateMockUsersStream();
+      return _mockUsersController.stream;
+    } else {
+      return _db!.collection('users').snapshots().map((snap) =>
+          snap.docs.map((doc) => UserModel.fromMap(doc.data(), doc.id)).toList());
+    }
+  }
+
+  // Stream riwayat untuk update real-time
+  Stream<List<HistoryModel>> getHistoryStream() {
+    if (_useMock) {
+      _updateMockHistoryStream();
+      return _mockHistoryController.stream;
+    } else {
+      return _db!.collection('riwayat_tes').orderBy('tanggal', descending: true).snapshots().map((snap) =>
+          snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList());
     }
   }
 
@@ -389,6 +467,7 @@ class FirestoreService {
         deskripsi: history.deskripsi,
         solusi: history.solusi,
       ));
+      _updateMockHistoryStream();
     } else {
       await _db!.collection('riwayat_tes').add(history.toMap());
     }
