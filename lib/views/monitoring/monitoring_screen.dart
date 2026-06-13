@@ -1,3 +1,4 @@
+import 'dart:ui' show ImageFilter;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,11 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
     
     // Sinkronisasi data saat halaman dibuka
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,23 +47,147 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+
     if (widget.isEmbedded) {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: const Color(0xFF6C63FF),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: const Color(0xFF6C63FF),
-              indicatorSize: TabBarIndicatorSize.tab,
-              tabs: const [
-                Tab(icon: Icon(Icons.show_chart_rounded), text: 'Grafik Tren Mood'),
-                Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Tes Pakar'),
-              ],
+          preferredSize: const Size.fromHeight(64),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isDarkBg 
+                        ? const Color(0xFF1E1E38).withOpacity(0.5) 
+                        : Colors.white.withOpacity(0.65),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: isDarkBg ? Colors.white10 : Colors.white.withOpacity(0.6),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Sliding background indicator
+                      AnimatedAlign(
+                        alignment: _tabController.index == 0 
+                            ? Alignment.centerLeft 
+                            : Alignment.centerRight,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.5,
+                          child: Container(
+                            margin: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: isDarkBg 
+                                  ? const Color(0xFF6C63FF) 
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Tab buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _tabController.animateTo(0);
+                                });
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.show_chart_rounded,
+                                      size: 18,
+                                      color: _tabController.index == 0
+                                          ? (isDarkBg ? Colors.white : const Color(0xFF6C63FF))
+                                          : (isDarkBg ? Colors.white38 : Colors.grey[600]),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Tren Mood',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: _tabController.index == 0
+                                            ? (isDarkBg ? Colors.white : const Color(0xFF6C63FF))
+                                            : (isDarkBg ? Colors.white38 : Colors.grey[600]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _tabController.animateTo(1);
+                                });
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.history_rounded,
+                                      size: 18,
+                                      color: _tabController.index == 1
+                                          ? (isDarkBg ? Colors.white : const Color(0xFF6C63FF))
+                                          : (isDarkBg ? Colors.white38 : Colors.grey[600]),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Riwayat Tes',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: _tabController.index == 1
+                                            ? (isDarkBg ? Colors.white : const Color(0xFF6C63FF))
+                                            : (isDarkBg ? Colors.white38 : Colors.grey[600]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -90,9 +220,39 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
           unselectedLabelColor: Colors.grey,
           indicatorColor: const Color(0xFF6C63FF),
           indicatorSize: TabBarIndicatorSize.tab,
-          tabs: const [
-            Tab(icon: Icon(Icons.show_chart_rounded), text: 'Grafik Tren Mood'),
-            Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Tes Pakar'),
+          tabs: [
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.show_chart_rounded, size: 18),
+                  SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Tren Mood',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Tab(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.history_rounded, size: 18),
+                  SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Riwayat Tes',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -110,6 +270,7 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
     final moodProvider = Provider.of<MoodProvider>(context);
     final moods = moodProvider.moods;
     final authProvider = Provider.of<AuthProvider>(context);
+    final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
     final paletteIdx = authProvider.selectedPaletteIndex;
     final emojiThemeIdx = authProvider.selectedEmojiThemeIndex;
     final colorMid = MoodThemeHelper.getMoodColor(paletteIdx, 3);
@@ -137,14 +298,21 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Tren Perkembangan Suasana Hati',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
+            style: TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.bold, 
+              color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+            ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Grafik di bawah ini menunjukkan pergerakan emosi harian Anda secara kronologis.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 12, 
+              color: isDarkBg ? Colors.white70 : Colors.grey,
+            ),
           ),
           const SizedBox(height: 24),
           
@@ -153,11 +321,15 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
             height: 250,
             padding: const EdgeInsets.only(right: 20, top: 20, bottom: 10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDarkBg ? Colors.white10 : Colors.transparent,
+                width: 1.0,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.01),
+                  color: Colors.black.withOpacity(isDarkBg ? 0.2 : 0.01),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 )
@@ -169,7 +341,10 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) {
-                    return const FlLine(color: Colors.black12, strokeWidth: 1);
+                    return FlLine(
+                      color: isDarkBg ? Colors.white10 : Colors.black12, 
+                      strokeWidth: 1,
+                    );
                   },
                 ),
                 titlesData: FlTitlesData(
@@ -188,7 +363,11 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               DateFormat('dd/MM').format(moods[idx].tanggal),
-                              style: const TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 9, 
+                                color: isDarkBg ? Colors.white54 : Colors.grey, 
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           );
                         }
@@ -221,7 +400,7 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
-                maxX: (moods.length - 1).toDouble(),
+                maxX: moods.length > 1 ? (moods.length - 1).toDouble() : 1.0,
                 minY: 1,
                 maxY: 5,
                 lineBarsData: [
@@ -253,9 +432,13 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
           const SizedBox(height: 24),
 
           // Mood logs list
-          const Text(
+          Text(
             'Catatan Jurnal Mood Terbaru',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
+            style: TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.bold, 
+              color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+            ),
           ),
           const SizedBox(height: 12),
           ListView.builder(
@@ -272,10 +455,18 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDarkBg ? Colors.white10 : Colors.transparent,
+                    width: 1.0,
+                  ),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 5, offset: const Offset(0, 2))
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.01), 
+                      blurRadius: 5, 
+                      offset: const Offset(0, 2),
+                    )
                   ],
                 ),
                 child: Row(
@@ -300,7 +491,10 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                               ),
                               Text(
                                 DateFormat('dd MMM yyyy').format(mood.tanggal),
-                                style: const TextStyle(fontSize: 11, color: Colors.black38),
+                                style: TextStyle(
+                                  fontSize: 11, 
+                                  color: isDarkBg ? Colors.white54 : Colors.black38,
+                                ),
                               ),
                             ],
                           ),
@@ -308,7 +502,11 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                             const SizedBox(height: 6),
                             Text(
                               mood.catatan,
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF505050), height: 1.3),
+                              style: TextStyle(
+                                fontSize: 13, 
+                                color: isDarkBg ? Colors.white70 : const Color(0xFF505050), 
+                                height: 1.3,
+                              ),
                             )
                           ],
                         ],
@@ -327,6 +525,7 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
   Widget _buildHistoryTab() {
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final historyList = diagnosticProvider.historyList;
+    final isDarkBg = Provider.of<AuthProvider>(context).selectedBackgroundThemeIndex == 2;
 
     if (diagnosticProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -350,112 +549,158 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDarkBg ? Colors.white10 : Colors.transparent,
+              width: 1.0,
+            ),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.01), blurRadius: 10, offset: const Offset(0, 4))
+              BoxShadow(
+                color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.01), 
+                blurRadius: 10, 
+                offset: const Offset(0, 4),
+              )
             ],
           ),
-          child: ExpansionTile(
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isNormal ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isNormal ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
-                color: isNormal ? Colors.green : Colors.redAccent,
-              ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              dividerColor: Colors.transparent,
             ),
-            title: Text(
-              history.hasilDiagnosis,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: isNormal ? Colors.green[800] : Colors.red[800],
-              ),
-            ),
-            subtitle: Text(
-              DateFormat('dd MMM yyyy, HH:mm').format(history.tanggal),
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Divider(height: 1),
-                    const SizedBox(height: 12),
-                    
-                    // Gejala terpilih
-                    const Text(
-                      'Gejala yang Anda laporkan:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: history.gejalaDipilih.map((code) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6C63FF).withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            code,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6C63FF)),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Deskripsi
-                    const Text(
-                      'Deskripsi Gangguan:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      history.deskripsi,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF505050), height: 1.4),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Solusi
-                    const Text(
-                      'Rekomendasi Pakar:',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      children: history.solusi.map((sol) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.arrow_right_rounded, color: Color(0xFF6C63FF), size: 18),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  sol,
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF3F3D56), height: 1.3),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
+            child: ExpansionTile(
+              iconColor: isDarkBg ? Colors.white70 : Colors.grey,
+              collapsedIconColor: isDarkBg ? Colors.white70 : Colors.grey,
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isNormal 
+                      ? Colors.green.withOpacity(isDarkBg ? 0.18 : 0.1) 
+                      : Colors.red.withOpacity(isDarkBg ? 0.18 : 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isNormal ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
+                  color: isNormal ? Colors.green : Colors.redAccent,
                 ),
               ),
-            ],
+              title: Text(
+                history.hasilDiagnosis,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isNormal 
+                      ? (isDarkBg ? Colors.green[200] : Colors.green[800]) 
+                      : (isDarkBg ? Colors.red[200] : Colors.red[800]),
+                ),
+              ),
+              subtitle: Text(
+                DateFormat('dd MMM yyyy, HH:mm').format(history.tanggal),
+                style: TextStyle(
+                  fontSize: 11, 
+                  color: isDarkBg ? Colors.white54 : Colors.grey,
+                ),
+              ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Divider(height: 1, color: isDarkBg ? Colors.white10 : Colors.black12),
+                      const SizedBox(height: 12),
+                      
+                      // Gejala terpilih
+                      Text(
+                        'Gejala yang Anda laporkan:',
+                        style: TextStyle(
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold, 
+                          color: isDarkBg ? Colors.white54 : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: history.gejalaDipilih.map((code) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6C63FF).withOpacity(isDarkBg ? 0.18 : 0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              code,
+                              style: TextStyle(
+                                fontSize: 10, 
+                                fontWeight: FontWeight.bold, 
+                                color: isDarkBg ? Colors.white : const Color(0xFF6C63FF),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+  
+                      // Deskripsi
+                      Text(
+                        'Deskripsi Gangguan:',
+                        style: TextStyle(
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold, 
+                          color: isDarkBg ? Colors.white54 : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        history.deskripsi,
+                        style: TextStyle(
+                          fontSize: 13, 
+                          color: isDarkBg ? Colors.white70 : const Color(0xFF505050), 
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+  
+                      // Solusi
+                      Text(
+                        'Rekomendasi Pakar:',
+                        style: TextStyle(
+                          fontSize: 12, 
+                          fontWeight: FontWeight.bold, 
+                          color: isDarkBg ? Colors.white54 : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Column(
+                        children: history.solusi.map((sol) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.arrow_right_rounded, color: Color(0xFF6C63FF), size: 18),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    sol,
+                                    style: TextStyle(
+                                      fontSize: 12, 
+                                      color: isDarkBg ? Colors.white70 : const Color(0xFF3F3D56), 
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -467,23 +712,32 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
     required String title,
     required String description,
   }) {
+    final isDarkBg = Provider.of<AuthProvider>(context, listen: false).selectedBackgroundThemeIndex == 2;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 60, color: Colors.grey[400]),
+            Icon(icon, size: 60, color: isDarkBg ? Colors.white38 : Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF3F3D56)),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDarkBg ? Colors.white : const Color(0xFF3F3D56),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, fontSize: 12, height: 1.4),
+              style: TextStyle(
+                color: isDarkBg ? Colors.white54 : Colors.grey,
+                fontSize: 12,
+                height: 1.4,
+              ),
             ),
           ],
         ),

@@ -65,17 +65,45 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void completePaletteSetup(int paletteIndex, int emojiThemeIndex, int backgroundThemeIndex) {
+  Future<void> completePaletteSetup(int paletteIndex, int emojiThemeIndex, int backgroundThemeIndex) async {
     _selectedPaletteIndex = paletteIndex;
     _selectedEmojiThemeIndex = emojiThemeIndex;
     _selectedBackgroundThemeIndex = backgroundThemeIndex;
     _paletteSetupCompleted = true;
     notifyListeners();
+
+    if (_user != null) {
+      try {
+        final updatedUser = await _authService.updateUserThemePreferences(
+          paletteIndex,
+          emojiThemeIndex,
+          backgroundThemeIndex,
+        );
+        _user = updatedUser;
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Gagal memperbarui preferensi tema di database: $e');
+      }
+    }
   }
 
-  void updateBackgroundTheme(int index) {
+  Future<void> updateBackgroundTheme(int index) async {
     _selectedBackgroundThemeIndex = index;
     notifyListeners();
+
+    if (_user != null) {
+      try {
+        final updatedUser = await _authService.updateUserThemePreferences(
+          _selectedPaletteIndex,
+          _selectedEmojiThemeIndex,
+          index,
+        );
+        _user = updatedUser;
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Gagal memperbarui preferensi background di database: $e');
+      }
+    }
   }
 
   void resetPaletteSetup() {
@@ -127,7 +155,7 @@ class AuthProvider extends ChangeNotifier {
 
   void resetInitialMoodSetup() {
     _initialMoodSetupCompleted = false;
-    _trialSetupCompleted = false;
+    _reminderSetupCompleted = false;
     notifyListeners();
   }
 
@@ -147,6 +175,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> updateProfile(String newName, int avatarIndex, String photoUrl) async {
+    try {
+      final updatedUser = await _authService.updateUserProfile(newName, avatarIndex, photoUrl);
+      _user = updatedUser;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Gagal memperbarui profil: $e');
+      return false;
+    }
+  }
+
   void resetTrialSetup() {
     _trialSetupCompleted = false;
     _reminderSetupCompleted = false;
@@ -164,6 +204,11 @@ class AuthProvider extends ChangeNotifier {
       debugPrint("Error in _initAuth during initialize: $e");
     } finally {
       _user = _authService.currentUser;
+      if (_user != null) {
+        _selectedPaletteIndex = _user!.paletteIndex;
+        _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
+        _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      }
       _status = _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
       notifyListeners();
     }
@@ -177,6 +222,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       _user = await _authService.signIn(email, password);
+      _selectedPaletteIndex = _user!.paletteIndex;
+      _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
+      _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -195,6 +243,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       _user = await _authService.signInWithGoogle();
+      _selectedPaletteIndex = _user!.paletteIndex;
+      _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
+      _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -214,6 +265,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       _user = await _authService.signUp(name, email, password, role: role);
+      _selectedPaletteIndex = _user!.paletteIndex;
+      _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
+      _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -230,6 +284,20 @@ class AuthProvider extends ChangeNotifier {
     await _authService.signOut();
     _user = null;
     _status = AuthStatus.unauthenticated;
+    
+    // Setel bendera onboarding & setup ke true agar pengguna diarahkan langsung ke Login Screen, bukan onboarding
+    _onboardingCompleted = true;
+    _privacyAccepted = true;
+    _paletteSetupCompleted = true;
+    _activitySetupCompleted = true;
+    _reminderSetupCompleted = true;
+    _initialMoodSetupCompleted = true;
+    
+    // Reset local customization state
+    _selectedPaletteIndex = 0;
+    _selectedEmojiThemeIndex = 0;
+    _selectedBackgroundThemeIndex = 0;
+    
     notifyListeners();
   }
 

@@ -4,6 +4,11 @@ class UserModel {
   final String name;
   final String role; // 'user' atau 'admin'
   final DateTime createdAt;
+  final int avatarIndex;
+  final String photoUrl;
+  final int paletteIndex;
+  final int emojiThemeIndex;
+  final int backgroundThemeIndex;
 
   UserModel({
     required this.uid,
@@ -11,6 +16,11 @@ class UserModel {
     required this.name,
     required this.role,
     required this.createdAt,
+    this.avatarIndex = 0,
+    this.photoUrl = "",
+    this.paletteIndex = 0,
+    this.emojiThemeIndex = 0,
+    this.backgroundThemeIndex = 0,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map, String id) {
@@ -22,6 +32,11 @@ class UserModel {
       createdAt: map['createdAt'] != null
           ? (map['createdAt'] as dynamic).toDate()
           : DateTime.now(),
+      avatarIndex: map['avatarIndex'] ?? 0,
+      photoUrl: map['photoUrl'] ?? "",
+      paletteIndex: map['paletteIndex'] ?? 0,
+      emojiThemeIndex: map['emojiThemeIndex'] ?? 0,
+      backgroundThemeIndex: map['backgroundThemeIndex'] ?? 0,
     );
   }
 
@@ -31,6 +46,11 @@ class UserModel {
       'name': name,
       'role': role,
       'createdAt': createdAt,
+      'avatarIndex': avatarIndex,
+      'photoUrl': photoUrl,
+      'paletteIndex': paletteIndex,
+      'emojiThemeIndex': emojiThemeIndex,
+      'backgroundThemeIndex': backgroundThemeIndex,
     };
   }
 }

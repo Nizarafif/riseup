@@ -113,6 +113,33 @@ class FirestoreService {
     }
   }
 
+  Future<void> seedDefaultData() async {
+    if (_useMock || _db == null) return;
+    
+    final batch = _db!.batch();
+    
+    // Seed symptoms
+    for (final s in _mockSymptoms) {
+      final docRef = _db!.collection('gejala').doc();
+      batch.set(docRef, s.toMap());
+    }
+    
+    // Seed diseases
+    for (final d in _mockDiseases) {
+      final docRef = _db!.collection('gangguan').doc();
+      batch.set(docRef, d.toMap());
+    }
+    
+    // Seed rules
+    for (final r in _mockRules) {
+      final docRef = _db!.collection('aturan').doc();
+      batch.set(docRef, r.toMap());
+    }
+    
+    await batch.commit();
+    debugPrint("Berhasil melakukan auto-seed data gejala, gangguan, dan aturan ke Firestore.");
+  }
+
   // --- Users CRUD ---
   Future<void> createUserProfile(UserModel user) async {
     if (_useMock) {
@@ -151,6 +178,67 @@ class FirestoreService {
         return UserModel.fromMap(doc.data()!, doc.id);
       }
       return null;
+    }
+  }
+
+  // --- Admin Queries ---
+  Future<List<UserModel>> getAllUsers() async {
+    if (_useMock) {
+      if (_mockUsers.isEmpty) {
+        _mockUsers.addAll([
+          UserModel(uid: 'user-1', email: 'budi@gmail.com', name: 'Budi Santoso', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 5))),
+          UserModel(uid: 'user-2', email: 'siti@yahoo.com', name: 'Siti Aminah', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 4))),
+          UserModel(uid: 'user-3', email: 'rudi@riseup.com', name: 'Rudi Wijaya', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 3))),
+          UserModel(uid: 'user-4', email: 'ani@gmail.com', name: 'Ani Lestari', role: 'user', createdAt: DateTime.now().subtract(const Duration(days: 2))),
+        ]);
+      }
+      return List.from(_mockUsers);
+    } else {
+      final snap = await _db!.collection('users').get();
+      return snap.docs.map((doc) => UserModel.fromMap(doc.data(), doc.id)).toList();
+    }
+  }
+
+  Future<List<HistoryModel>> getAllHistory() async {
+    if (_useMock) {
+      if (_mockHistory.isEmpty) {
+        _mockHistory.addAll([
+          HistoryModel(
+            id: 'h-1',
+            userId: 'user-1',
+            tanggal: DateTime.now().subtract(const Duration(hours: 4)),
+            gejalaDipilih: ['G001', 'G002', 'G003'],
+            hasilDiagnosis: 'Stress Ringan',
+            diagnosisCode: 'P001',
+            deskripsi: 'Kondisi di mana Anda mengalami tekanan emosional ringan.',
+            solusi: ['Lakukan latihan relaksasi pernapasan.', 'Tulis jurnal mood.'],
+          ),
+          HistoryModel(
+            id: 'h-2',
+            userId: 'user-2',
+            tanggal: DateTime.now().subtract(const Duration(hours: 12)),
+            gejalaDipilih: ['G004', 'G005', 'G006'],
+            hasilDiagnosis: 'Stress Sedang',
+            diagnosisCode: 'P002',
+            deskripsi: 'Mengalami tekanan mental sedang.',
+            solusi: ['Lakukan hobi.', 'Ceritakan beban pikiran.'],
+          ),
+          HistoryModel(
+            id: 'h-3',
+            userId: 'user-3',
+            tanggal: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+            gejalaDipilih: ['G010', 'G011', 'G012'],
+            hasilDiagnosis: 'Depresi',
+            diagnosisCode: 'P004',
+            deskripsi: 'Menunjukkan indikasi depresi.',
+            solusi: ['Konsultasi dengan Psikolog.', 'Ikuti terapi CBT.'],
+          ),
+        ]);
+      }
+      return List.from(_mockHistory)..sort((a, b) => b.tanggal.compareTo(a.tanggal));
+    } else {
+      final snap = await _db!.collection('riwayat_tes').orderBy('tanggal', descending: true).get();
+      return snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList();
     }
   }
 
@@ -256,15 +344,36 @@ class FirestoreService {
   // --- Diagnostic History CRUD ---
   Future<List<HistoryModel>> getHistory(String userId) async {
     if (_useMock) {
-      return _mockHistory.where((h) => h.userId == userId).toList()
-        ..sort((a, b) => b.tanggal.compareTo(a.tanggal));
+      final list = _mockHistory.where((h) => h.userId == userId).toList();
+      if (list.isEmpty) {
+        // Pre-populate a default history for this user so they see a sample diagnosis
+        final sampleHistory = HistoryModel(
+          id: 'mock-h-default-$userId',
+          userId: userId,
+          tanggal: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
+          gejalaDipilih: ['G001', 'G002', 'G003'],
+          hasilDiagnosis: 'Stress Ringan',
+          diagnosisCode: 'P001',
+          deskripsi: 'Kondisi di mana Anda mengalami tekanan emosional ringan. Hal ini wajar dan dapat diatasi secara mandiri dengan istirahat serta relaksasi.',
+          solusi: [
+            'Lakukan latihan relaksasi pernapasan (Box Breathing) 5-10 menit.',
+            'Tulis jurnal mood harian untuk meluapkan beban pikiran.',
+            'Istirahat tidur yang cukup (7-8 jam) dan minum air putih yang cukup.'
+          ],
+        );
+        _mockHistory.add(sampleHistory);
+        return [sampleHistory];
+      }
+      list.sort((a, b) => b.tanggal.compareTo(a.tanggal));
+      return list;
     } else {
       final snap = await _db!
           .collection('riwayat_tes')
           .where('userId', isEqualTo: userId)
-          .orderBy('tanggal', descending: true)
           .get();
-      return snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList();
+      final list = snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList();
+      list.sort((a, b) => b.tanggal.compareTo(a.tanggal)); // Urutkan terbaru dahulu di memori
+      return list;
     }
   }
 
@@ -289,15 +398,30 @@ class FirestoreService {
   Future<List<MoodModel>> getMoods(String userId) async {
     if (_useMock) {
       final list = _mockMoods.where((m) => m.userId == userId).toList();
+      if (list.isEmpty) {
+        // Pre-populate mock moods for the user so the trend immediately works for testing!
+        final now = DateTime.now();
+        _mockMoods.addAll([
+          MoodModel(id: 'm-1', userId: userId, tanggal: now.subtract(const Duration(days: 4)), moodLevel: 3, catatan: 'Hari yang cukup biasa.'),
+          MoodModel(id: 'm-2', userId: userId, tanggal: now.subtract(const Duration(days: 3)), moodLevel: 4, catatan: 'Belajar Flutter hari ini, menyenangkan!'),
+          MoodModel(id: 'm-3', userId: userId, tanggal: now.subtract(const Duration(days: 2)), moodLevel: 2, catatan: 'Sedikit lelah karena kurang tidur.'),
+          MoodModel(id: 'm-4', userId: userId, tanggal: now.subtract(const Duration(days: 1)), moodLevel: 4, catatan: 'Olahraga sore sangat membantu mood.'),
+          MoodModel(id: 'm-5', userId: userId, tanggal: now, moodLevel: 5, catatan: 'Sangat senang hari ini karena semua berjalan lancar!'),
+        ]);
+        final populatedList = _mockMoods.where((m) => m.userId == userId).toList();
+        populatedList.sort((a, b) => a.tanggal.compareTo(b.tanggal));
+        return populatedList;
+      }
       list.sort((a, b) => a.tanggal.compareTo(b.tanggal));
       return list;
     } else {
       final snap = await _db!
           .collection('mood_tracker')
           .where('userId', isEqualTo: userId)
-          .orderBy('tanggal', descending: false)
           .get();
-      return snap.docs.map((doc) => MoodModel.fromMap(doc.data(), doc.id)).toList();
+      final list = snap.docs.map((doc) => MoodModel.fromMap(doc.data(), doc.id)).toList();
+      list.sort((a, b) => a.tanggal.compareTo(b.tanggal)); // Urutkan terlama ke terbaru di memori
+      return list;
     }
   }
 

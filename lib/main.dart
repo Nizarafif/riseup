@@ -14,7 +14,6 @@ import 'views/onboarding/privacy_screen.dart';
 import 'views/onboarding/palette_setup_screen.dart';
 import 'views/onboarding/activity_setup_screen.dart';
 import 'views/onboarding/reminder_setup_screen.dart';
-import 'views/onboarding/premium_trial_screen.dart';
 import 'views/onboarding/initial_mood_screen.dart';
 
 void main() async {
@@ -98,8 +97,6 @@ class AuthWrapper extends StatelessWidget {
           return const ActivitySetupScreen();
         } else if (!authProvider.reminderSetupCompleted) {
           return const ReminderSetupScreen();
-        } else if (!authProvider.trialSetupCompleted) {
-          return const PremiumTrialScreen();
         } else if (!authProvider.initialMoodSetupCompleted) {
           return const InitialMoodScreen();
         } else {

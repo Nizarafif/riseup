@@ -51,7 +51,6 @@ class AuthService {
       }
 
       _auth = FirebaseAuth.instance;
-      await _initializeGoogleSignIn();
       await FirestoreService().initialize();
       _useMock = false;
       debugPrint("Firebase Auth berhasil diinisialisasi.");
@@ -188,6 +187,74 @@ class AuthService {
       await _auth?.signOut();
       _mockCurrentUser = null;
     }
+  }
+
+  Future<UserModel> updateUserProfile(String newName, int avatarIndex, String photoUrl) async {
+    final user = _mockCurrentUser;
+    if (user == null) {
+      throw Exception('Sesi pengguna tidak aktif.');
+    }
+    
+    final updatedUser = UserModel(
+      uid: user.uid,
+      email: user.email,
+      name: newName.trim(),
+      role: user.role,
+      createdAt: user.createdAt,
+      avatarIndex: avatarIndex,
+      photoUrl: photoUrl.trim(),
+      paletteIndex: user.paletteIndex,
+      emojiThemeIndex: user.emojiThemeIndex,
+      backgroundThemeIndex: user.backgroundThemeIndex,
+    );
+    
+    if (_useMock) {
+      _mockCurrentUser = updatedUser;
+      final idx = _mockUsers.indexWhere((u) => u.uid == user.uid);
+      if (idx != -1) {
+        _mockUsers[idx] = updatedUser;
+      }
+    } else {
+      await FirestoreService().createUserProfile(updatedUser);
+      final firebaseUser = _auth?.currentUser;
+      if (firebaseUser != null) {
+        await firebaseUser.updateDisplayName(newName.trim());
+      }
+      _mockCurrentUser = updatedUser;
+    }
+    return updatedUser;
+  }
+
+  Future<UserModel> updateUserThemePreferences(int paletteIndex, int emojiThemeIndex, int backgroundThemeIndex) async {
+    final user = _mockCurrentUser;
+    if (user == null) {
+      throw Exception('Sesi pengguna tidak aktif.');
+    }
+    
+    final updatedUser = UserModel(
+      uid: user.uid,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt,
+      avatarIndex: user.avatarIndex,
+      photoUrl: user.photoUrl,
+      paletteIndex: paletteIndex,
+      emojiThemeIndex: emojiThemeIndex,
+      backgroundThemeIndex: backgroundThemeIndex,
+    );
+    
+    if (_useMock) {
+      _mockCurrentUser = updatedUser;
+      final idx = _mockUsers.indexWhere((u) => u.uid == user.uid);
+      if (idx != -1) {
+        _mockUsers[idx] = updatedUser;
+      }
+    } else {
+      await FirestoreService().createUserProfile(updatedUser);
+      _mockCurrentUser = updatedUser;
+    }
+    return updatedUser;
   }
 
   // Reset Password / Lupa Kata Sandi

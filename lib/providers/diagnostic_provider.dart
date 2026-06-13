@@ -3,6 +3,7 @@ import '../models/symptom_model.dart';
 import '../models/disease_model.dart';
 import '../models/rule_model.dart';
 import '../models/history_model.dart';
+import '../models/user_model.dart';
 import '../services/firestore_service.dart';
 import '../services/expert_system_service.dart';
 
@@ -13,6 +14,9 @@ class DiagnosticProvider extends ChangeNotifier {
   List<DiseaseModel> _diseases = [];
   List<RuleModel> _rules = [];
   List<HistoryModel> _historyList = [];
+  
+  List<UserModel> _allUsers = [];
+  List<HistoryModel> _allHistories = [];
 
   final List<String> _selectedSymptomCodes = [];
   bool _isLoading = false;
@@ -24,10 +28,27 @@ class DiagnosticProvider extends ChangeNotifier {
   List<DiseaseModel> get diseases => _diseases;
   List<RuleModel> get rules => _rules;
   List<HistoryModel> get historyList => _historyList;
+  List<UserModel> get allUsers => _allUsers;
+  List<HistoryModel> get allHistories => _allHistories;
   List<String> get selectedSymptomCodes => _selectedSymptomCodes;
   bool get isLoading => _isLoading;
   DiseaseModel? get latestDiagnosis => _latestDiagnosis;
   bool get inferenceCompleted => _inferenceCompleted;
+
+  // Memuat data analitik admin
+  Future<void> loadAdminData() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _allUsers = await _dbService.getAllUsers();
+      _allHistories = await _dbService.getAllHistory();
+    } catch (e) {
+      debugPrint("Gagal memuat data admin: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   // Memuat data awal dari database
   Future<void> loadDiagnosticData(String userId) async {
@@ -36,11 +57,36 @@ class DiagnosticProvider extends ChangeNotifier {
 
     try {
       _symptoms = await _dbService.getSymptoms();
+      
+      // Auto-seeding jika database kosong di real Firestore
+      if (!_dbService.useMock && _symptoms.isEmpty) {
+        debugPrint("Database gejala kosong. Melakukan auto-seeding ke Firestore...");
+        await _dbService.seedDefaultData();
+        _symptoms = await _dbService.getSymptoms();
+      }
+
       _diseases = await _dbService.getDiseases();
       _rules = await _dbService.getRules();
       await fetchHistory(userId);
     } catch (e) {
       debugPrint("Gagal memuat data diagnostik: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Melakukan seeding database secara manual (misal dari Panel Pakar)
+  Future<void> seedDatabase() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _dbService.seedDefaultData();
+      _symptoms = await _dbService.getSymptoms();
+      _diseases = await _dbService.getDiseases();
+      _rules = await _dbService.getRules();
+    } catch (e) {
+      debugPrint("Gagal melakukan seeding database: $e");
     } finally {
       _isLoading = false;
       notifyListeners();

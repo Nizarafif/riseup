@@ -50,41 +50,48 @@ class _PaletteSetupScreenState extends State<PaletteSetupScreen> {
                     IconButton(
                       icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
                       onPressed: () {
-                        authProvider.resetPaletteSetup();
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          authProvider.resetPaletteSetup();
+                        }
                       },
                       tooltip: 'Kembali',
                     ),
-                    // Indikator Halaman (3 titik, titik pertama aktif)
-                    Row(
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: textColor,
-                            shape: BoxShape.circle,
+                    // Indikator Halaman (3 titik, titik pertama aktif) - Sembunyikan jika dibuka dari pengaturan
+                    if (!Navigator.of(context).canPop())
+                      Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: textColor,
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: textColor.withOpacity(0.3),
-                            shape: BoxShape.circle,
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: textColor.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: textColor.withOpacity(0.3),
-                            shape: BoxShape.circle,
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: textColor.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else
+                      const SizedBox(width: 48), // Spacer pengganti agar simetris
                     const SizedBox(width: 48), // Spacer penyeimbang tombol back
                   ],
                 ),
@@ -359,6 +366,9 @@ class _PaletteSetupScreenState extends State<PaletteSetupScreen> {
                         _selectedEmojiThemeIndex,
                         _selectedBackgroundThemeIndex,
                       );
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFD54F),
@@ -371,17 +381,20 @@ class _PaletteSetupScreenState extends State<PaletteSetupScreen> {
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
+                      children: [
                         Text(
-                          'Berikutnya',
-                          style: TextStyle(
+                          Navigator.of(context).canPop() ? 'Simpan' : 'Berikutnya',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Navigator.of(context).canPop() ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
