@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/revenue_cat_service.dart';
@@ -150,7 +151,17 @@ class AuthProvider extends ChangeNotifier {
 
   void completeInitialMoodSetup() {
     _initialMoodSetupCompleted = true;
+    _persistOnboardingCompleted();
     notifyListeners();
+  }
+
+  Future<void> _persistOnboardingCompleted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', true);
+    } catch (e) {
+      debugPrint('Gagal menyimpan status onboarding: $e');
+    }
   }
 
   void resetInitialMoodSetup() {
@@ -200,6 +211,18 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _initAuth() async {
     try {
       await _authService.initialize();
+      
+      // Muat status onboarding dari SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final isCompleted = prefs.getBool('onboarding_completed') ?? false;
+      if (isCompleted) {
+        _onboardingCompleted = true;
+        _privacyAccepted = true;
+        _paletteSetupCompleted = true;
+        _activitySetupCompleted = true;
+        _reminderSetupCompleted = true;
+        _initialMoodSetupCompleted = true;
+      }
     } catch (e) {
       debugPrint("Error in _initAuth during initialize: $e");
     } finally {
@@ -208,6 +231,15 @@ class AuthProvider extends ChangeNotifier {
         _selectedPaletteIndex = _user!.paletteIndex;
         _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
         _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+        
+        // Jika user terautentikasi, tandai onboarding selesai
+        _onboardingCompleted = true;
+        _privacyAccepted = true;
+        _paletteSetupCompleted = true;
+        _activitySetupCompleted = true;
+        _reminderSetupCompleted = true;
+        _initialMoodSetupCompleted = true;
+        _persistOnboardingCompleted();
       }
       _status = _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
       notifyListeners();
@@ -225,6 +257,16 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      
+      // Tandai onboarding selesai saat berhasil login
+      _onboardingCompleted = true;
+      _privacyAccepted = true;
+      _paletteSetupCompleted = true;
+      _activitySetupCompleted = true;
+      _reminderSetupCompleted = true;
+      _initialMoodSetupCompleted = true;
+      _persistOnboardingCompleted();
+
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -246,6 +288,16 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+
+      // Tandai onboarding selesai saat berhasil login
+      _onboardingCompleted = true;
+      _privacyAccepted = true;
+      _paletteSetupCompleted = true;
+      _activitySetupCompleted = true;
+      _reminderSetupCompleted = true;
+      _initialMoodSetupCompleted = true;
+      _persistOnboardingCompleted();
+
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -268,6 +320,16 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+
+      // Tandai onboarding selesai saat berhasil registrasi
+      _onboardingCompleted = true;
+      _privacyAccepted = true;
+      _paletteSetupCompleted = true;
+      _activitySetupCompleted = true;
+      _reminderSetupCompleted = true;
+      _initialMoodSetupCompleted = true;
+      _persistOnboardingCompleted();
+
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
