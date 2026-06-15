@@ -57,7 +57,13 @@ class AuthService {
 
       final firebaseUser = _auth!.currentUser;
       if (firebaseUser != null) {
-        _mockCurrentUser = await _ensureUserProfile(firebaseUser);
+        if (firebaseUser.isAnonymous) {
+          debugPrint("Sesi tamu Firebase dideteksi. Melakukan auto-logout saat startup...");
+          await _auth!.signOut();
+          _mockCurrentUser = null;
+        } else {
+          _mockCurrentUser = await _ensureUserProfile(firebaseUser);
+        }
       } else {
         _mockCurrentUser = null;
       }
@@ -129,6 +135,38 @@ class AuthService {
     final appUser = await _ensureUserProfile(firebaseUser);
     _mockCurrentUser = appUser;
     return appUser;
+  }
+
+  // Login Sebagai Tamu (Anonymous Login)
+  Future<UserModel> signInAnonymously() async {
+    if (_useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      final guestUser = UserModel(
+        uid: 'mock-guest-${DateTime.now().millisecondsSinceEpoch}',
+        email: 'guest@riseup.com',
+        name: 'Tamu RiseUp',
+        role: 'user',
+        createdAt: DateTime.now(),
+      );
+      _mockCurrentUser = guestUser;
+      return guestUser;
+    } else {
+      final credential = await _auth!.signInAnonymously();
+      final firebaseUser = credential.user;
+      if (firebaseUser == null) {
+        throw Exception('Login Tamu gagal.');
+      }
+      final guestUser = UserModel(
+        uid: firebaseUser.uid,
+        email: '',
+        name: 'Tamu RiseUp',
+        role: 'user',
+        createdAt: DateTime.now(),
+      );
+      await _saveUserProfile(guestUser);
+      _mockCurrentUser = guestUser;
+      return guestUser;
+    }
   }
 
   // Registrasi

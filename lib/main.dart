@@ -7,6 +7,7 @@ import 'providers/auth_provider.dart';
 import 'providers/diagnostic_provider.dart';
 import 'providers/mood_provider.dart';
 import 'services/revenue_cat_service.dart';
+import 'services/notification_service.dart';
 import 'views/auth/login_screen.dart';
 import 'views/home/dashboard_screen.dart';
 import 'views/onboarding/onboarding_screen.dart';
@@ -21,6 +22,9 @@ void main() async {
   
   // Inisialisasi format penanggalan lokal Indonesia (id_ID)
   await initializeDateFormatting('id_ID', null);
+
+  // Inisialisasi Layanan Notifikasi Lokal & Timezones
+  await NotificationService().initialize();
 
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(

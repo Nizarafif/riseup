@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/mood_model.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 
 class MoodProvider extends ChangeNotifier {
   final FirestoreService _dbService = FirestoreService();
@@ -48,6 +49,10 @@ class MoodProvider extends ChangeNotifier {
     try {
       await _dbService.addMood(mood);
       await fetchMoods(userId); // Sinkronisasi ulang data lokal
+      
+      // Reschedule pengingat notifikasi harian agar dilewati untuk hari ini
+      await NotificationService().onMoodLogged();
+      
       return true;
     } catch (e) {
       debugPrint("Gagal menyimpan mood: $e");

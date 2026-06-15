@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/revenue_cat_service.dart';
+import '../services/notification_service.dart';
 
 enum AuthStatus { uninitialized, authenticated, unauthenticated, authenticating, error }
 
@@ -136,6 +137,7 @@ class AuthProvider extends ChangeNotifier {
     _selectedReminderTime = time;
     _reminderSetupCompleted = true;
     notifyListeners();
+    NotificationService().scheduleDailyReminder(time);
   }
 
   void resetReminderSetup() {
@@ -309,6 +311,38 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Aksi Login Sebagai Tamu (Anonymous Login)
+  Future<bool> signInAnonymously() async {
+    try {
+      _status = AuthStatus.authenticating;
+      _errorMessage = '';
+      notifyListeners();
+
+      _user = await _authService.signInAnonymously();
+      _selectedPaletteIndex = _user!.paletteIndex;
+      _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
+      _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+
+      // Tandai onboarding selesai saat berhasil masuk tamu
+      _onboardingCompleted = true;
+      _privacyAccepted = true;
+      _paletteSetupCompleted = true;
+      _activitySetupCompleted = true;
+      _reminderSetupCompleted = true;
+      _initialMoodSetupCompleted = true;
+      _persistOnboardingCompleted();
+
+      _status = AuthStatus.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = _formatAuthError(e);
+      _status = AuthStatus.error;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Aksi Sign Up
   Future<bool> signUp(String name, String email, String password, {String role = 'user'}) async {
     try {
@@ -343,6 +377,11 @@ class AuthProvider extends ChangeNotifier {
 
   // Aksi Sign Out
   Future<void> signOut() async {
+    try {
+      await NotificationService().cancelAll();
+    } catch (e) {
+      debugPrint('Gagal membatalkan notifikasi saat signOut: $e');
+    }
     await _authService.signOut();
     _user = null;
     _status = AuthStatus.unauthenticated;

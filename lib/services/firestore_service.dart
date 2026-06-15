@@ -517,4 +517,168 @@ class FirestoreService {
       await _db!.collection('mood_tracker').add(mood.toMap());
     }
   }
+
+  // --- Posters CRUD ---
+  final List<String> _mockPosters = [
+    'assets/poster/poster1.jpg',
+    'assets/poster/poster3.jpg',
+    'assets/poster/poster4.jpg',
+    'assets/poster/posterr5.jpg',
+  ];
+  
+  final StreamController<List<String>> _mockPostersController = StreamController<List<String>>.broadcast();
+
+  void _updateMockPostersStream() {
+    _mockPostersController.add(List.from(_mockPosters));
+  }
+
+  Stream<List<String>> getPostersStream() {
+    if (_useMock) {
+      Timer(Duration.zero, () => _updateMockPostersStream());
+      return _mockPostersController.stream;
+    } else {
+      return _db!.collection('posters').snapshots().map((snap) {
+        if (snap.docs.isEmpty) {
+          return [
+            'assets/poster/poster1.jpg',
+            'assets/poster/poster3.jpg',
+            'assets/poster/poster4.jpg',
+            'assets/poster/posterr5.jpg',
+          ];
+        }
+        return snap.docs.map((doc) => doc.data()['path'] as String).toList();
+      });
+    }
+  }
+
+  Future<List<String>> getPosters() async {
+    if (_useMock) {
+      return List.from(_mockPosters);
+    } else {
+      final snap = await _db!.collection('posters').get();
+      if (snap.docs.isEmpty) {
+        return [
+          'assets/poster/poster1.jpg',
+          'assets/poster/poster3.jpg',
+          'assets/poster/poster4.jpg',
+          'assets/poster/posterr5.jpg',
+        ];
+      }
+      return snap.docs.map((doc) => doc.data()['path'] as String).toList();
+    }
+  }
+
+  Future<void> addPoster(String path) async {
+    if (_useMock) {
+      if (!_mockPosters.contains(path)) {
+        _mockPosters.add(path);
+        _updateMockPostersStream();
+      }
+    } else {
+      final existing = await _db!.collection('posters').where('path', isEqualTo: path).get();
+      if (existing.docs.isEmpty) {
+        await _db!.collection('posters').add({'path': path, 'createdAt': FieldValue.serverTimestamp()});
+      }
+    }
+  }
+
+  Future<void> deletePoster(String path) async {
+    if (_useMock) {
+      _mockPosters.remove(path);
+      _updateMockPostersStream();
+    } else {
+      final snap = await _db!.collection('posters').where('path', isEqualTo: path).get();
+      for (final doc in snap.docs) {
+        await doc.reference.delete();
+      }
+    }
+  }
+
+  // --- Motivations CRUD ---
+  final List<String> _mockMotivations = [
+    'Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak.',
+    'Tidak apa-apa untuk tidak merasa baik-baik saja. Kamu tidak harus berpura-pura kuat sepanjang waktu.',
+    'Satu langkah kecil menuju perawatan diri hari ini adalah kemenangan besar bagi mentalmu.',
+    'Kesehatan mental bukanlah tujuan akhir, melainkan sebuah perjalanan harian yang patut disyukuri.',
+    'Tarik napas dalam-dalam, hembuskan perlahan. Hari ini baru dimulai, dan kamu sanggup menjalaninya.',
+    'Mencintai diri sendiri berarti menerima bahwa kamu juga berhak untuk beristirahat dan pulih.',
+    'Pikiranmu bisa menjadi tempat yang damai jika kamu memperlakukannya dengan kebaikan dan kesabaran.',
+    'Kamu berharga, tidak peduli seberapa berat hari-hari yang sedang kamu lalui saat ini.'
+  ];
+
+  final StreamController<List<String>> _mockMotivationsController = StreamController<List<String>>.broadcast();
+
+  void _updateMockMotivationsStream() {
+    _mockMotivationsController.add(List.from(_mockMotivations));
+  }
+
+  Stream<List<String>> getMotivationsStream() {
+    if (_useMock) {
+      Timer(Duration.zero, () => _updateMockMotivationsStream());
+      return _mockMotivationsController.stream;
+    } else {
+      return _db!.collection('motivations').snapshots().map((snap) {
+        if (snap.docs.isEmpty) {
+          return [
+            'Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak.',
+            'Tidak apa-apa untuk tidak merasa baik-baik saja. Kamu tidak harus berpura-pura kuat sepanjang waktu.',
+            'Satu langkah kecil menuju perawatan diri hari ini adalah kemenangan besar bagi mentalmu.',
+            'Kesehatan mental bukanlah tujuan akhir, melainkan sebuah perjalanan harian yang patut disyukuri.',
+            'Tarik napas dalam-dalam, hembuskan perlahan. Hari ini baru dimulai, dan kamu sanggup menjalaninya.',
+            'Mencintai diri sendiri berarti menerima bahwa kamu juga berhak untuk beristirahat dan pulih.',
+            'Pikiranmu bisa menjadi tempat yang damai jika kamu memperlakukannya dengan kebaikan dan kesabaran.',
+            'Kamu berharga, tidak peduli seberapa berat hari-hari yang sedang kamu lalui saat ini.'
+          ];
+        }
+        return snap.docs.map((doc) => doc.data()['text'] as String).toList();
+      });
+    }
+  }
+
+  Future<List<String>> getMotivations() async {
+    if (_useMock) {
+      return List.from(_mockMotivations);
+    } else {
+      final snap = await _db!.collection('motivations').get();
+      if (snap.docs.isEmpty) {
+        return [
+          'Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak.',
+          'Tidak apa-apa untuk tidak merasa baik-baik saja. Kamu tidak harus berpura-pura kuat sepanjang waktu.',
+          'Satu langkah kecil menuju perawatan diri hari ini adalah kemenangan besar bagi mentalmu.',
+          'Kesehatan mental bukanlah tujuan akhir, melainkan sebuah perjalanan harian yang patut disyukuri.',
+          'Tarik napas dalam-dalam, hembuskan perlahan. Hari ini baru dimulai, dan kamu sanggup menjalaninya.',
+          'Mencintai diri sendiri berarti menerima bahwa kamu juga berhak untuk beristirahat dan pulih.',
+          'Pikiranmu bisa menjadi tempat yang damai jika kamu memperlakukannya dengan kebaikan dan kesabaran.',
+          'Kamu berharga, tidak peduli seberapa berat hari-hari yang sedang kamu lalui saat ini.'
+        ];
+      }
+      return snap.docs.map((doc) => doc.data()['text'] as String).toList();
+    }
+  }
+
+  Future<void> addMotivation(String text) async {
+    if (_useMock) {
+      if (!_mockMotivations.contains(text)) {
+        _mockMotivations.add(text);
+        _updateMockMotivationsStream();
+      }
+    } else {
+      final existing = await _db!.collection('motivations').where('text', isEqualTo: text).get();
+      if (existing.docs.isEmpty) {
+        await _db!.collection('motivations').add({'text': text, 'createdAt': FieldValue.serverTimestamp()});
+      }
+    }
+  }
+
+  Future<void> deleteMotivation(String text) async {
+    if (_useMock) {
+      _mockMotivations.remove(text);
+      _updateMockMotivationsStream();
+    } else {
+      final snap = await _db!.collection('motivations').where('text', isEqualTo: text).get();
+      for (final doc in snap.docs) {
+        await doc.reference.delete();
+      }
+    }
+  }
 }

@@ -98,6 +98,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Future<void> _signUpAnonymously() async {
+    setState(() {
+      _isSocialLoading = true;
+      _socialPlatform = 'Tamu';
+    });
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.signInAnonymously();
+
+    if (!mounted) return;
+    setState(() {
+      _isSocialLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selamat datang! Anda masuk sebagai Tamu.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(authProvider.errorMessage),
+        backgroundColor: Colors.redAccent,
+      ),
+    );
+  }
+
   void _socialSignUp(String platform) async {
     if (platform == 'Google') {
       await _signUpWithGoogle();
@@ -124,156 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _showPhoneSignUpDialog() {
-    final phoneController = TextEditingController();
-    final otpController = TextEditingController();
-    bool isOtpSent = false;
-    final formKey = GlobalKey<FormState>();
-    CountryInfo selectedCountry = _countries[0]; // Default to Indonesia
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Row(
-                children: const [
-                  Icon(Icons.phone_android_rounded, color: Color(0xFF6C63FF)),
-                  SizedBox(width: 10),
-                  Text('Daftar No. Telepon', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!isOtpSent) ...[
-                      const Text(
-                        'Masukkan nomor telepon Anda untuk menerima kode verifikasi OTP.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(
-                          hintText: '81234567890',
-                          prefixIcon: InkWell(
-                            onTap: () {
-                              _showCountryPickerBottomSheet(
-                                context,
-                                (CountryInfo country) {
-                                  setState(() {
-                                    selectedCountry = country;
-                                  });
-                                },
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    selectedCountry.flag,
-                                    style: const TextStyle(fontSize: 18),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    selectedCountry.code,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF3F3D56)),
-                                  ),
-                                  const SizedBox(width: 2),
-                                  const Icon(Icons.arrow_drop_down_rounded, color: Colors.grey, size: 20),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    height: 20,
-                                    width: 1,
-                                    color: Colors.black12,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        validator: (val) {
-                          if (val == null || val.isEmpty) {
-                            return 'Nomor telepon tidak boleh kosong';
-                          }
-                          if (val.length < 8) {
-                            return 'Nomor telepon tidak valid';
-                          }
-                          return null;
-                        },
-                      ),
-                    ] else ...[
-                      const Text(
-                        'Kode OTP simulasi telah dikirim ke nomor Anda. Masukkan kode 123456 untuk masuk.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: otpController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 20, letterSpacing: 8, fontWeight: FontWeight.bold),
-                        decoration: InputDecoration(
-                          hintText: '******',
-                          counterText: '',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        validator: (val) {
-                          if (val == null || val.isEmpty) {
-                            return 'Kode OTP wajib diisi';
-                          }
-                          if (val != '123456') {
-                            return 'Kode OTP salah (Gunakan 123456)';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Batal'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () {
-                    if (!formKey.currentState!.validate()) return;
-
-                    if (!isOtpSent) {
-                      setState(() {
-                        isOtpSent = true;
-                      });
-                    } else {
-                      Navigator.pop(context);
-                      _socialSignUp('No. Telepon');
-                    }
-                  },
-                  child: Text(isOtpSent ? 'Verifikasi' : 'Kirim OTP'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -590,14 +474,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              // Nomor Telepon (SMS OTP Demo)
+                              // Masuk Tamu (Guest Login)
                               Expanded(
                                 child: SizedBox(
                                   height: 50,
                                   child: OutlinedButton(
                                     onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
                                         ? null
-                                        : _showPhoneSignUpDialog,
+                                        : _signUpAnonymously,
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Colors.black12, width: 1.5),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -606,9 +490,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: const [
-                                        Icon(Icons.phone_android_rounded, color: Colors.blueAccent, size: 20),
+                                        Icon(Icons.account_circle_outlined, color: Colors.blueAccent, size: 20),
                                         SizedBox(width: 6),
-                                        Text('No. Telepon', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
+                                        Text('Masuk Tamu', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
@@ -630,82 +514,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _showCountryPickerBottomSheet(BuildContext context, Function(CountryInfo) onSelected) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Center(
-                child: SizedBox(
-                  width: 40,
-                  height: 4,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black12,
-                      borderRadius: BorderRadius.all(Radius.circular(2)),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Pilih Kode Negara',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF3F3D56)),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _countries.length,
-                  itemBuilder: (context, index) {
-                    final country = _countries[index];
-                    return ListTile(
-                      leading: Text(country.flag, style: const TextStyle(fontSize: 24)),
-                      title: Text(country.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                      trailing: Text(
-                        country.code,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6C63FF)),
-                      ),
-                      onTap: () {
-                        onSelected(country);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
-
-class CountryInfo {
-  final String name;
-  final String code;
-  final String flag;
-
-  const CountryInfo({required this.name, required this.code, required this.flag});
-}
-
-const List<CountryInfo> _countries = [
-  CountryInfo(name: 'Indonesia', code: '+62', flag: '🇮🇩'),
-  CountryInfo(name: 'Malaysia', code: '+60', flag: '🇲🇾'),
-  CountryInfo(name: 'Singapore', code: '+65', flag: '🇸🇬'),
-  CountryInfo(name: 'United States', code: '+1', flag: '🇺🇸'),
-  CountryInfo(name: 'United Kingdom', code: '+44', flag: '🇬🇧'),
-  CountryInfo(name: 'Japan', code: '+81', flag: '🇯🇵'),
-  CountryInfo(name: 'Australia', code: '+61', flag: '🇦🇺'),
-  CountryInfo(name: 'Saudi Arabia', code: '+966', flag: '🇸🇦'),
-  CountryInfo(name: 'Thailand', code: '+66', flag: '🇹🇭'),
-  CountryInfo(name: 'Philippines', code: '+63', flag: '🇵🇭'),
-];

@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import '../services/firestore_service.dart';
 import '../services/expert_system_service.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class DiagnosticProvider extends ChangeNotifier {
   StreamSubscription<List<UserModel>>? _usersSubscription;
@@ -21,6 +22,10 @@ class DiagnosticProvider extends ChangeNotifier {
   
   List<UserModel> _allUsers = [];
   List<HistoryModel> _allHistories = [];
+  List<String> _posters = [];
+  StreamSubscription<List<String>>? _postersSubscription;
+  List<String> _motivations = [];
+  StreamSubscription<List<String>>? _motivationsSubscription;
 
   final List<String> _selectedSymptomCodes = [];
   bool _isLoading = false;
@@ -34,6 +39,8 @@ class DiagnosticProvider extends ChangeNotifier {
   List<HistoryModel> get historyList => _historyList;
   List<UserModel> get allUsers => _allUsers;
   List<HistoryModel> get allHistories => _allHistories;
+  List<String> get posters => _posters;
+  List<String> get motivations => _motivations;
   List<String> get selectedSymptomCodes => _selectedSymptomCodes;
   bool get isLoading => _isLoading;
   DiseaseModel? get latestDiagnosis => _latestDiagnosis;
@@ -216,6 +223,9 @@ class DiagnosticProvider extends ChangeNotifier {
       await _dbService.addHistory(historyItem);
       // Perbarui riwayat lokal
       await fetchHistory(userId);
+      
+      // Reschedule pengingat notifikasi harian agar dilewati untuk hari ini
+      await NotificationService().onScreeningCompleted();
     } catch (e) {
       debugPrint("Gagal menyimpan riwayat diagnosis: $e");
     } finally {
@@ -300,6 +310,68 @@ class DiagnosticProvider extends ChangeNotifier {
   @override
   void dispose() {
     cancelAdminListeners();
+    cancelPostersListener();
+    cancelMotivationsListener();
     super.dispose();
+  }
+
+  // --- Posters CRUD & Sync ---
+  void listenToPosters() {
+    _postersSubscription?.cancel();
+    _postersSubscription = _dbService.getPostersStream().listen((postersList) {
+      _posters = postersList;
+      notifyListeners();
+    });
+  }
+
+  void cancelPostersListener() {
+    _postersSubscription?.cancel();
+    _postersSubscription = null;
+  }
+
+  Future<void> addPoster(String path) async {
+    await _dbService.addPoster(path);
+    if (_postersSubscription == null) {
+      _posters = await _dbService.getPosters();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deletePoster(String path) async {
+    await _dbService.deletePoster(path);
+    if (_postersSubscription == null) {
+      _posters = await _dbService.getPosters();
+      notifyListeners();
+    }
+  }
+
+  // --- Motivations CRUD & Sync ---
+  void listenToMotivations() {
+    _motivationsSubscription?.cancel();
+    _motivationsSubscription = _dbService.getMotivationsStream().listen((motivationsList) {
+      _motivations = motivationsList;
+      notifyListeners();
+    });
+  }
+
+  void cancelMotivationsListener() {
+    _motivationsSubscription?.cancel();
+    _motivationsSubscription = null;
+  }
+
+  Future<void> addMotivation(String text) async {
+    await _dbService.addMotivation(text);
+    if (_motivationsSubscription == null) {
+      _motivations = await _dbService.getMotivations();
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteMotivation(String text) async {
+    await _dbService.deleteMotivation(text);
+    if (_motivationsSubscription == null) {
+      _motivations = await _dbService.getMotivations();
+      notifyListeners();
+    }
   }
 }

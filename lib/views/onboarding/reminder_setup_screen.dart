@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/widgets/doodle_background.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../services/notification_service.dart';
 
 class ReminderSetupScreen extends StatefulWidget {
   const ReminderSetupScreen({super.key});
@@ -47,7 +48,7 @@ class _ReminderSetupScreenState extends State<ReminderSetupScreen> {
       
       // Otomatis memicu pop-up izin notifikasi setelah mengatur jam
       try {
-        await Permission.notification.request();
+        await NotificationService().requestPermission();
       } catch (e) {
         debugPrint('Gagal meminta izin notifikasi: $e');
       }
@@ -268,11 +269,11 @@ class _ReminderSetupScreenState extends State<ReminderSetupScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       try {
-                        await Permission.notification.request();
-                      } catch (e) {
-                        debugPrint('Gagal meminta izin notifikasi: $e');
-                      }
-                      authProvider.completeReminderSetup(_reminderTime);
+                      await NotificationService().requestPermission();
+                    } catch (e) {
+                      debugPrint('Gagal meminta izin notifikasi: $e');
+                    }
+                    authProvider.completeReminderSetup(_reminderTime);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFD54F),
