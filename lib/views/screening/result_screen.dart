@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/diagnostic_provider.dart';
+import 'map_webview_screen.dart';
+import 'widgets/counselor_list_sheet.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key});
+
+  void _launchMaps(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const MapWebviewScreen(
+          url: 'https://www.google.com/maps/search/?api=1&query=psikolog+dan+psikiater+terdekat',
+          title: 'Peta Psikolog & Psikiater',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,11 +168,11 @@ class ResultScreen extends StatelessWidget {
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Membuka kontak konseling Psikolog klinis mitra...'),
-                                backgroundColor: Color(0xFF00C9A7),
-                              ),
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => const CounselorListSheet(),
                             );
                           },
                           icon: const Icon(Icons.support_agent_rounded, color: Colors.white, size: 18),
@@ -169,6 +182,25 @@ class ResultScreen extends StatelessWidget {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _launchMaps(context),
+                          icon: const Icon(Icons.map_rounded, color: Colors.redAccent, size: 18),
+                          label: const Text(
+                            'Cari Psikolog / Psikiater Terdekat',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontSize: 13),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.redAccent, width: 1.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

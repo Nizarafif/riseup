@@ -162,13 +162,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+
+    // Theme colors
+    final primaryTextColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+    final secondaryTextColor = isDarkBg ? const Color(0xFF9E9EAF) : const Color(0xFF707070);
+    final cardBgColor = isDarkBg ? const Color(0xFF1E1E38).withOpacity(0.85) : Colors.white.withOpacity(0.90);
+    final cardBorderColor = isDarkBg ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.85);
+    final accentColor = isDarkBg ? const Color(0xFFA5B4FC) : const Color(0xFF6C63FF);
+    final fieldBorderColor = isDarkBg ? Colors.white24 : Colors.black12;
+    final inputStyle = TextStyle(color: isDarkBg ? Colors.white : Colors.black87);
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF3F3D56)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: primaryTextColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -185,22 +195,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
 
-                    const Text(
+                    Text(
                       'Buat Akun Baru',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF3F3D56),
+                        color: primaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Mulai pantau kesehatan mentalmu hari ini!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF707070),
+                        color: secondaryTextColor,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -209,12 +219,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.90),
+                        color: cardBgColor,
                         borderRadius: BorderRadius.circular(38),
-                        border: Border.all(color: Colors.white.withOpacity(0.85), width: 2.2),
+                        border: Border.all(color: cardBorderColor, width: 2.2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6C63FF).withOpacity(0.06),
+                            color: accentColor.withOpacity(0.06),
                             blurRadius: 24,
                             spreadRadius: 2,
                             offset: const Offset(0, 10),
@@ -232,21 +242,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           // Name Input (Chubby)
                           TextFormField(
                             controller: _nameController,
+                            style: inputStyle,
                             decoration: InputDecoration(
                               labelText: 'Nama Lengkap',
-                              labelStyle: const TextStyle(fontSize: 13),
-                              prefixIcon: const Icon(Icons.person_outline_rounded, color: Color(0xFF6C63FF), size: 20),
+                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
+                              prefixIcon: Icon(Icons.person_outline_rounded, color: accentColor, size: 20),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
+                                borderSide: BorderSide(color: accentColor, width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
+                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                                borderSide: BorderSide(color: accentColor, width: 2.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
@@ -263,21 +274,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: inputStyle,
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              labelStyle: const TextStyle(fontSize: 13),
-                              prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF6C63FF), size: 20),
+                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
+                              prefixIcon: Icon(Icons.email_outlined, color: accentColor, size: 20),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
+                                borderSide: BorderSide(color: accentColor, width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
+                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                                borderSide: BorderSide(color: accentColor, width: 2.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
@@ -297,17 +309,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
+                            style: inputStyle,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              labelStyle: const TextStyle(fontSize: 13),
-                              prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
+                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
+                              prefixIcon: Icon(Icons.lock_outline_rounded, color: accentColor, size: 20),
                               suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
                               suffixIcon: Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: IconButton(
                                   icon: Icon(
                                     _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                    color: const Color(0xFF6C63FF),
+                                    color: accentColor,
                                     size: 22,
                                   ),
                                   tooltip: _obscurePassword ? 'Tampilkan password' : 'Sembunyikan password',
@@ -320,15 +333,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
+                                borderSide: BorderSide(color: accentColor, width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
+                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                                borderSide: BorderSide(color: accentColor, width: 2.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
@@ -348,17 +361,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirmPassword,
+                            style: inputStyle,
                             decoration: InputDecoration(
                               labelText: 'Konfirmasi Password',
-                              labelStyle: const TextStyle(fontSize: 13),
-                              prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF6C63FF), size: 20),
+                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
+                              prefixIcon: Icon(Icons.lock_outline_rounded, color: accentColor, size: 20),
                               suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
                               suffixIcon: Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: IconButton(
                                   icon: Icon(
                                     _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                    color: const Color(0xFF6C63FF),
+                                    color: accentColor,
                                     size: 22,
                                   ),
                                   tooltip: _obscureConfirmPassword ? 'Tampilkan password' : 'Sembunyikan password',
@@ -371,15 +385,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 1.8),
+                                borderSide: BorderSide(color: accentColor, width: 1.8),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Colors.black12, width: 1.5),
+                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: const BorderSide(color: Color(0xFF6C63FF), width: 2.0),
+                                borderSide: BorderSide(color: accentColor, width: 2.0),
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                             ),
@@ -399,22 +413,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: ElevatedButton(
                               onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading ? null : _submit,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6C63FF),
-                                foregroundColor: Colors.white,
+                                backgroundColor: accentColor,
+                                foregroundColor: isDarkBg ? Colors.black : Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(22),
                                 ),
                                 elevation: 0,
                               ),
                               child: authProvider.status == AuthStatus.authenticating
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                      child: CircularProgressIndicator(color: isDarkBg ? Colors.black : Colors.white, strokeWidth: 2.5),
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Daftar Akun Baru',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDarkBg ? Colors.black : Colors.white),
                                     ),
                             ),
                           ),
@@ -423,13 +437,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           
                           // Custom Divider
                           Row(
-                            children: const [
-                              Expanded(child: Divider(color: Colors.black12, thickness: 1)),
+                            children: [
+                              Expanded(child: Divider(color: isDarkBg ? Colors.white12 : Colors.black12, thickness: 1)),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Text('atau daftar dengan', style: TextStyle(color: Colors.black38, fontSize: 11, fontWeight: FontWeight.w500)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                child: Text('atau daftar dengan', style: TextStyle(color: isDarkBg ? Colors.white38 : Colors.black38, fontSize: 11, fontWeight: FontWeight.w500)),
                               ),
-                              Expanded(child: Divider(color: Colors.black12, thickness: 1)),
+                              Expanded(child: Divider(color: isDarkBg ? Colors.white12 : Colors.black12, thickness: 1)),
                             ],
                           ),
                           
@@ -447,7 +461,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ? null
                                         : () => _socialSignUp('Google'),
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      side: BorderSide(color: isDarkBg ? Colors.white24 : Colors.black12, width: 1.5),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
@@ -467,7 +481,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                                  fit: BoxFit.contain,
                                                ),
                                                const SizedBox(width: 8),
-                                               const Text('Google', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
+                                               Text('Google', style: TextStyle(color: primaryTextColor, fontSize: 13, fontWeight: FontWeight.bold)),
                                              ],
                                            ),
                                   ),
@@ -483,16 +497,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ? null
                                         : _signUpAnonymously,
                                     style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Colors.black12, width: 1.5),
+                                      side: BorderSide(color: isDarkBg ? Colors.white24 : Colors.black12, width: 1.5),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Icon(Icons.account_circle_outlined, color: Colors.blueAccent, size: 20),
-                                        SizedBox(width: 6),
-                                        Text('Masuk Tamu', style: TextStyle(color: Color(0xFF3F3D56), fontSize: 13, fontWeight: FontWeight.bold)),
+                                      children: [
+                                        Icon(Icons.account_circle_outlined, color: isDarkBg ? const Color(0xFFA5B4FC) : Colors.blueAccent, size: 20),
+                                        const SizedBox(width: 6),
+                                        Text('Masuk Tamu', style: TextStyle(color: primaryTextColor, fontSize: 13, fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),

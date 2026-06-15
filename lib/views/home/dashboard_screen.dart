@@ -15,6 +15,7 @@ import 'widgets/breathing_modal.dart';
 import 'widgets/home_tab.dart';
 import 'widgets/screening_tab.dart';
 import 'widgets/settings_tab.dart';
+import '../screening/map_webview_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -212,10 +213,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (user != null &&
         user.role == 'user' &&
-        !diagnosticProvider.hasTestedToday &&
-        diagnosticProvider.historyList.isEmpty) {
-      _showWelcomeTestDialog();
+        !diagnosticProvider.hasTestedToday) {
+      if (diagnosticProvider.historyList.isEmpty) {
+        _showWelcomeTestDialog();
+      } else {
+        _showDailyScreeningReminderDialog();
+      }
     }
+  }
+
+  void _showDailyScreeningReminderDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+        final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+        final titleColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+        final contentColor = isDarkBg ? Colors.white70 : const Color(0xFF505050);
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          backgroundColor: dialogBgColor,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00C9A7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.calendar_today_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Evaluasi Harian',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: titleColor,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Hari baru telah dimulai! Yuk, sempatkan waktu 1 menit untuk melakukan tes skrining harian agar perkembangan emosi dan kesehatan mentalmu tetap terpantau dengan baik.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: contentColor,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Nanti Saja',
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6C63FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+              ),
+              child: const Text(
+                'Mulai Skrining',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showWelcomeTestDialog() {
@@ -442,8 +540,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _showBreathingGuide();
                 },
                 isOpen: _isMenuOpen,
-                targetBottom: 110,
-                targetLeft: screenWidth / 2 - 80 - 60,
+                targetBottom: 105,
+                targetLeft: screenWidth / 2 - 120 - 60,
+                closedBottom: 30,
+                closedLeft: screenWidth / 2 - 60,
+              ),
+              _buildFloatingItem(
+                icon: Icons.map_rounded,
+                label: 'Peta Pakar',
+                color: Colors.indigo,
+                onTap: () {
+                  setState(() => _isMenuOpen = false);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MapWebviewScreen(
+                        url: 'https://www.google.com/maps/search/?api=1&query=psikolog+dan+psikiater+terdekat',
+                        title: 'Peta Psikolog & Psikiater',
+                      ),
+                    ),
+                  );
+                },
+                isOpen: _isMenuOpen,
+                targetBottom: 175,
+                targetLeft: screenWidth / 2 - 45 - 60,
                 closedBottom: 30,
                 closedLeft: screenWidth / 2 - 60,
               ),
@@ -456,8 +575,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
                 },
                 isOpen: _isMenuOpen,
-                targetBottom: 110,
-                targetLeft: screenWidth / 2 + 80 - 60,
+                targetBottom: 175,
+                targetLeft: screenWidth / 2 + 45 - 60,
                 closedBottom: 30,
                 closedLeft: screenWidth / 2 - 60,
               ),
@@ -470,8 +589,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _showAmbientMusicSheet();
                 },
                 isOpen: _isMenuOpen,
-                targetBottom: 175,
-                targetLeft: screenWidth / 2 - 60,
+                targetBottom: 105,
+                targetLeft: screenWidth / 2 + 120 - 60,
                 closedBottom: 30,
                 closedLeft: screenWidth / 2 - 60,
               ),

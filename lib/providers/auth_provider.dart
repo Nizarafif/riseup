@@ -73,6 +73,7 @@ class AuthProvider extends ChangeNotifier {
     _selectedBackgroundThemeIndex = backgroundThemeIndex;
     _paletteSetupCompleted = true;
     notifyListeners();
+    _persistTheme(paletteIndex, emojiThemeIndex, backgroundThemeIndex);
 
     if (_user != null) {
       try {
@@ -92,6 +93,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> updateBackgroundTheme(int index) async {
     _selectedBackgroundThemeIndex = index;
     notifyListeners();
+    _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, index);
 
     if (_user != null) {
       try {
@@ -225,6 +227,10 @@ class AuthProvider extends ChangeNotifier {
         _reminderSetupCompleted = true;
         _initialMoodSetupCompleted = true;
       }
+      // Muat tema yang tersimpan dari SharedPreferences (untuk tamu atau sebelum login)
+      _selectedPaletteIndex = prefs.getInt('selected_palette_index') ?? 0;
+      _selectedEmojiThemeIndex = prefs.getInt('selected_emoji_theme_index') ?? 0;
+      _selectedBackgroundThemeIndex = prefs.getInt('selected_background_theme_index') ?? 0;
     } catch (e) {
       debugPrint("Error in _initAuth during initialize: $e");
     } finally {
@@ -242,6 +248,7 @@ class AuthProvider extends ChangeNotifier {
         _reminderSetupCompleted = true;
         _initialMoodSetupCompleted = true;
         _persistOnboardingCompleted();
+        _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, _selectedBackgroundThemeIndex);
       }
       _status = _user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated;
       notifyListeners();
@@ -259,6 +266,7 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, _selectedBackgroundThemeIndex);
       
       // Tandai onboarding selesai saat berhasil login
       _onboardingCompleted = true;
@@ -290,6 +298,7 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, _selectedBackgroundThemeIndex);
 
       // Tandai onboarding selesai saat berhasil login
       _onboardingCompleted = true;
@@ -322,6 +331,7 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, _selectedBackgroundThemeIndex);
 
       // Tandai onboarding selesai saat berhasil masuk tamu
       _onboardingCompleted = true;
@@ -354,6 +364,7 @@ class AuthProvider extends ChangeNotifier {
       _selectedPaletteIndex = _user!.paletteIndex;
       _selectedEmojiThemeIndex = _user!.emojiThemeIndex;
       _selectedBackgroundThemeIndex = _user!.backgroundThemeIndex;
+      _persistTheme(_selectedPaletteIndex, _selectedEmojiThemeIndex, _selectedBackgroundThemeIndex);
 
       // Tandai onboarding selesai saat berhasil registrasi
       _onboardingCompleted = true;
@@ -394,12 +405,20 @@ class AuthProvider extends ChangeNotifier {
     _reminderSetupCompleted = true;
     _initialMoodSetupCompleted = true;
     
-    // Reset local customization state
-    _selectedPaletteIndex = 0;
-    _selectedEmojiThemeIndex = 0;
-    _selectedBackgroundThemeIndex = 0;
+    // Jangan reset local customization state agar halaman login tetap mengikuti tema terakhir yang disetel
     
     notifyListeners();
+  }
+
+  Future<void> _persistTheme(int paletteIndex, int emojiThemeIndex, int backgroundThemeIndex) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('selected_palette_index', paletteIndex);
+      await prefs.setInt('selected_emoji_theme_index', emojiThemeIndex);
+      await prefs.setInt('selected_background_theme_index', backgroundThemeIndex);
+    } catch (e) {
+      debugPrint('Gagal menyimpan tema di SharedPreferences: $e');
+    }
   }
 
   // Clear Error
