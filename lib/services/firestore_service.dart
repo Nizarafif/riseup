@@ -7,6 +7,7 @@ import '../models/disease_model.dart';
 import '../models/rule_model.dart';
 import '../models/history_model.dart';
 import '../models/mood_model.dart';
+import '../models/book_model.dart';
 
 class FirestoreService {
   static final FirestoreService _instance = FirestoreService._internal();
@@ -92,6 +93,233 @@ class FirestoreService {
 
   final List<HistoryModel> _mockHistory = [];
   final List<MoodModel> _mockMoods = [];
+
+  final List<BookModel> _mockBooks = [
+    BookModel(
+      id: 'b1',
+      title: 'Seni Berdamai dengan Diri',
+      author: 'Tim Konselor RiseUp',
+      duration: '8 Menit Baca',
+      coverColors: [0xFF6C63FF, 0xFF8F8AFF],
+      icon: 'self_improvement',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Mengenal Luka Lama',
+          content: 'Berdamai dengan diri sendiri dimulai dengan keberanian untuk melihat ke belakang. Luka di masa lalu, baik berupa kegagalan, kekecewaan, atau penolakan, sering kali meninggalkan bekas yang tidak terlihat namun terus memengaruhi keputusan kita hari ini.\n\nMenerima bahwa masa lalu telah terjadi adalah langkah awal yang sangat penting. Kita tidak bisa mengubah apa yang sudah berlalu, tetapi kita memiliki kendali penuh atas bagaimana kita merespons masa lalu tersebut di masa kini. Tarik napas perlahan, dan katakan pada dirimu sendiri bahwa apa yang terjadi di masa lalu telah membentukmu menjadi sosok yang tangguh seperti sekarang.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Memaafkan untuk Melangkah',
+          content: 'Memaafkan diri sendiri sering kali jauh lebih sulit daripada memaafkan orang lain. Kita cenderung menjadi kritikus paling kejam bagi diri kita sendiri. Setiap kesalahan kecil terus diungkit dalam pikiran.\n\nSadarlah bahwa sebagai manusia, kita terbatas dan tidak luput dari kesalahan. Memaafkan diri sendiri bukan berarti membenarkan tindakan buruk di masa lalu, melainkan melepaskan beban rasa bersalah agar kita dapat melangkah maju dengan hati yang lebih ringan. Mulailah berbicara kepada dirimu sendiri dengan kelembutan, layaknya kamu berbicara kepada seorang sahabat karib.',
+        ),
+        BookChapter(
+          title: 'Bab 3: Merangkul Ketidaksempurnaan',
+          content: 'Kita hidup di dunia yang sering kali menuntut kesempurnaan. Media sosial menampilkan kehidupan orang lain yang tampak tanpa celah, memicu kita untuk membandingkan diri secara tidak adil.\n\nKetidaksempurnaan adalah bagian alami dari menjadi manusia. Keindahan sejati terletak pada keunikan dan proses perjuangan kita masing-masing. Berhentilah mengejar standar yang tidak realistis. Rayakan setiap pencapaian kecil yang kamu raih hari ini, dan ingatlah bahwa kamu sudah cukup berharga apa adanya.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b2',
+      title: 'Keluar dari Lorong Depresi',
+      author: 'Dr. Sarah (Pakar Mental)',
+      duration: '5 Menit Baca',
+      coverColors: [0xFF00C9A7, 0xFF5BE7C4],
+      icon: 'wb_sunny',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Ketika Awan Gelap Datang',
+          content: 'Depresi sering kali digambarkan seperti awan mendung tebal yang menggelapkan seluruh sudut kehidupan. Hal-hal yang dulunya membawa kebahagiaan mendadak terasa hambar. Energi tubuh terasa terkuras habis, bahkan untuk melakukan aktivitas paling sederhana sekalipun.\n\nJika kamu merasakan hal ini, ketahuilah bahwa ini bukanlah kelemahan karaktermu. Ini adalah respon kesehatan mental yang membutuhkan perhatian dan kelembutan. Jangan memaksakan dirimu untuk langsung sembuh dalam semalam. Mengakui bahwa kamu sedang berjuang adalah langkah awal yang luar biasa.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Cahaya di Ujung Lorong',
+          content: 'Harapan adalah kunci utama dalam pemulihan dari depresi. Meskipun saat ini lorong terasa sangat gelap dan tanpa ujung, ketahuilah bahwa cahaya itu ada.\n\nLangkah-langkah kecil sangatlah berarti. Mulailah dengan membuka jendela kamar, membiarkan sinar matahari pagi masuk, atau meminum segelas air hangat. Jangan ragu untuk mencari bantuan profesional. Berbicara dengan psikolog atau orang terdekat akan meruntuhkan tembok isolasi yang dibangun oleh depresi. Kamu tidak harus berjalan di lorong ini sendirian.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b3',
+      title: 'Buku Saku Penenang Cemas',
+      author: 'Tim Psikologi RiseUp',
+      duration: '6 Menit Baca',
+      coverColors: [0xFFFF9F64, 0xFFFFBD96],
+      icon: 'menu_book',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Napas dan Kesadaran',
+          content: 'Kecemasan sering kali datang tanpa mengetuk pintu. Jantung berdegup kencang, pikiran melayang memikirkan kemungkinan terburuk di masa depan, dan tubuh menjadi tegang.\n\nKetika kecemasan menyerang, jangkar terbaikmu adalah napasmu. Teknik pernapasan lambat mengaktifkan sistem saraf parasimpatik yang memberi sinyal aman ke otak Anda. Cobalah tarik napas selama 4 detik, tahan selama 4 detik, hembuskan selama 4 detik, dan tahan kembali selama 4 detik. Lakukan ini beberapa kali hingga Anda merasa kembali terhubung dengan momen saat ini.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Menghadapi Serangan Panik',
+          content: 'Serangan panik terasa sangat menakutkan, seolah-olah Anda kehilangan kendali total atas tubuh Anda. Ingatlah satu hal penting: serangan panik akan berlalu. Ia memuncak dalam beberapa menit dan perlahan akan mereda.\n\nFokuskan indramu ke lingkungan sekitar dengan teknik 5-4-3-2-1: Sebutkan 5 benda yang kamu lihat, 4 benda yang bisa kamu sentuh, 3 suara yang kamu dengar, 2 bau yang kamu cium, dan 1 rasa yang kamu rasakan. Ini akan membantu mengalihkan fokus otak Anda dari ancaman imajiner kembali ke realitas fisik yang aman.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b4',
+      title: 'Hal yang Perlu Dilakukan Saat Stres',
+      author: 'World Health Organization (WHO)',
+      duration: '12 Menit Baca',
+      coverColors: [0xFF0284C7, 0xFF38BDF8],
+      icon: 'health_and_safety',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Menstabilkan Diri (Grounding)',
+          content: 'Ketika badai stres datang menyerang, pikiran kita sering kali melayang ke masa depan yang menakutkan atau terjebak dalam penyesalan masa lalu. Grounding membantu kita \'mendaratkan\' kembali kesadaran pada saat ini.\n\nLangkah pertama adalah menyadari apa yang sedang terjadi pada dirimu. Akui pikiran dan perasaanmu yang sedang berkecamuk tanpa menghakiminya. Tarik napas secara perlahan. Rasakan kakimu menapak kuat di lantai, rasakan berat tubuhmu disangga oleh kursi atau tanah.\n\nSelanjutnya, lakukan teknik koneksi kembali dengan indramu. Perhatikan sekelilingmu: sebutkan secara perlahan 5 benda yang bisa kamu lihat, dengarkan suara-suara di sekitarmu, hirup aroma udara saat ini. Dengan membumikan perhatianmu, kamu membantu otakmu menyadari bahwa saat ini, di sini, kamu berada dalam kondisi yang aman.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Melepaskan Diri (Unhooking)',
+          content: 'Pikiran dan emosi negatif sering kali bertindak seperti kail pancing (hook) yang mencengkeram perhatian kita. Ketika kita terjerat (hooked), kita cenderung bertindak secara impulsif atau menjauh dari nilai-nilai kebaikan.\n\nMulai dengan menyadari kehadiran kail tersebut. Katakan pada dirimu sendiri: \'Ah, ini ada pikiran bahwa saya tidak mampu,\' atau \'Ada perasaan cemas yang sedang mencengkeram saya.\' Dengan menamainya, kamu membuat jarak antara dirimu dan pikiran tersebut.\n\nIngatlah bahwa pikiran hanyalah kata-kata di dalam kepala, dan emosi hanyalah sensasi di dalam tubuh. Kamu tidak harus menuruti atau melawan pikiran tersebut. Cukup biarkan ia ada di sana tanpa membiarkannya mengendalikan tindakanmu. Fokuskan kembali perhatianmu pada apa yang sedang kamu lakukan.',
+        ),
+        BookChapter(
+          title: 'Bab 3: Bertindak Sesuai Nilai Diri',
+          content: 'Bahkan di tengah situasi yang sangat penuh stres sekalipun, kita masih memiliki kebebasan untuk memilih bagaimana kita ingin bertindak. Nilai-nilai diri (values) adalah kompas moral yang memandu perilaku kita.\n\nTanyakan pada dirimu sendiri: \'Orang seperti apa yang ingin saya jadikan diri saya di tengah kesulitan ini? Apakah saya ingin menjadi orang yang penuh kasih, sabar, bertanggung jawab, atau protektif?\'\n\nTindakan sekecil apa pun yang selaras dengan nilai-nilai dirimu dapat memberikan rasa kebermaknaan dan kekuatan. Jika kamu menghargai kasih sayang, hubungi teman yang membutuhkan atau bersikaplah lembut pada dirimu sendiri. Fokuslah pada apa yang berada dalam kendalimu, bukan pada hal-hal yang tidak dapat kamu ubah.',
+        ),
+        BookChapter(
+          title: 'Bab 4: Bersikap Baik pada Diri & Sesama',
+          content: 'Saat stres melanda, kita cenderung bersikap keras kepada diri sendiri. Kita menyalahkan diri atas kesalahan atau ketidakberdayaan kita. Namun, obat terbaik untuk hati yang lelah adalah belas kasih (compassion).\n\nBersikap baik pada diri sendiri berarti memperlakukan dirimu seperti memperlakukan seorang sahabat karib yang sedang mengalami kesulitan. Hindari kritik diri yang kasar. Katakan kalimat yang menenangkan, seperti: \'Ini adalah momen yang sulit, tetapi saya melakukan yang terbaik yang saya bisa.\'\n\nSelain itu, carilah kesempatan untuk bersikap baik pada sesama. Tindakan menolong orang lain tidak hanya membantu mereka, tetapi juga memperkuat koneksi sosial kita sendiri dan meningkatkan kesejahteraan mental kita. Kita menghadapi kesulitan bersama-sama.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b5',
+      title: 'Melangkah di Bawah Rintik Hujan',
+      author: 'Aria Rinata (Novelis)',
+      duration: '10 Menit Baca',
+      coverColors: [0xFFEF4444, 0xFFF87171],
+      icon: 'self_improvement',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Mimpi yang Patah',
+          content: 'Rendra menatap lembar penolakan itu dengan mata nanar. Surat kelima belas dari penerbit terkemuka. Ruang kerjanya yang sempit terasa semakin sesak oleh tumpukan kertas draf novelnya yang tak kunjung terbit. Baginya, mimpi menjadi seorang penulis kini terasa seperti fatamorgana di tengah gurun pasir.\n\nIa merasa dunia bergerak maju begitu cepat, meninggalkan dirinya yang terdiam di tempat. Sahabat-sahabatnya telah mapan dengan karier masing-masing, sementara ia masih berkutat dengan kata-kata yang tak menghasilkan apa-apa. Di tengah keputusasaan itu, Rendra lupa bahwa setiap pohon membutuhkan musim gugur sebelum ia bisa bersemi kembali. Ia memutuskan untuk berjalan-jalan keluar, membiarkan pikirannya yang bising ditenangkan oleh udara luar.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Pertemuan di Kedai Teh Kuno',
+          content: 'Rintik hujan mulai turun membasahi jalanan kota. Rendra berteduh di sebuah kedai teh kecil berarsitektur kayu kuno yang belum pernah ia lihat sebelumnya. Di sana, ia bertemu dengan seorang nenek pembuat teh bernama Ibu Sekar.\n\nIbu Sekar menyajikan secangkir teh melati hangat. Sembari tersenyum, beliau berkata, \'Teh melati ini butuh waktu seduh yang tepat. Jika terlalu cepat, rasanya akan hambar. Jika terlalu lama, rasanya akan pahit. Begitu juga dengan hidup kita, Nak. Segala hal indah membutuhkan waktu untuk matang.\' Percakapan sederhana itu menghangatkan hati Rendra yang dingin. Ia menyadari bahwa penolakan bukanlah akhir, melainkan waktu seduh yang sedang dialaminya agar ia menjadi versi terbaik dirinya.',
+        ),
+        BookChapter(
+          title: 'Bab 3: Menulis dengan Jiwa',
+          content: 'Rendra pulang dengan semangat baru. Ia tidak lagi menulis demi pengakuan dunia atau lembaran rupiah semata, melainkan untuk meluapkan jiwanya. Ia menulis tentang Ibu Sekar, tentang kedai teh hangat, tentang rintik hujan, dan tentang jiwanya yang sempat patah.\n\nSetahun kemudian, novel barunya terbit dengan judul \'Rintik Hujan di Kedai Teh\'. Buku itu tidak hanya sukses besar secara komersial, tetapi juga menjadi penyejuk hati bagi ribuan pembaca yang sedang mengalami kegagalan. Rendra tersenyum menatap hujan di balik jendela. Ia akhirnya paham: rintik hujan tidak turun untuk merusak harimu, melainkan untuk menyuburkan tanah yang gersang.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b6',
+      title: 'Menemukan Bahagia dalam Secangkir Kopi',
+      author: 'Dr. Adrian (Praktisi Mindfulness)',
+      duration: '9 Menit Baca',
+      coverColors: [0xFF1E293B, 0xFF475569],
+      icon: 'wb_sunny',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Jebakan Rutinitas Bising',
+          content: 'Setiap pagi, Maya terbangun dengan perasaan cemas yang sama. Suara alarm ponselnya seperti sirine tanda bahaya. Hari-harinya diisi dengan membalas ratusan surel, rapat tanpa akhir, dan mengejar target kantor yang tidak pernah selesai. Maya terjebak dalam pusaran \'burnout\'.\n\nTubuhnya ada di masa kini, namun pikirannya selalu melompat ke tugas berikutnya. Ia makan siang sembari mengetik, berjalan sembari menelepon, bahkan tidur sembari memikirkan hari esok. Hidupnya terasa hambar, seperti kopi instan murah yang diseduh terburu-buru. Maya lupa kapan terakhir kali ia benar-benar menikmati hembusan angin pagi atau rasa makanan yang dikunyahnya.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Seni Memperlambat Waktu',
+          content: 'Suatu sore di hari Sabtu, Maya memutuskan untuk mematikan seluruh notifikasi ponselnya. Ia pergi ke teras rumah, menyeduh secangkir kopi hitam secara manual. Kali ini, ia berjanji pada dirinya sendiri untuk melakukan satu hal saja: meminum kopi.\n\nIa memulainya dengan menghirup aroma kopi yang mengepul hangat. Maya memperhatikan warna cokelat pekatnya, merasakan hangatnya cangkir keramik di telapak tangannya. Saat sesapan pertama menyentuh lidahnya, ia membiarkan rasa pahit dan asam kopi tertinggal sejenak sebelum menelannya. Untuk pertama kalinya setelah sekian bulan, Maya merasa \'hadir secara utuh\'. Waktu seolah memperlambat jalannya, memberikan ruang bagi jiwanya untuk bernapas bebas.',
+        ),
+        BookChapter(
+          title: 'Bab 3: Hidup di Sini dan Saat Ini',
+          content: 'Maya menyadari bahwa kebahagiaan sejati tidak terletak pada akhir pekan yang mewah atau pencapaian karier yang megah, melainkan pada kemampuan kita untuk hadir sepenuhnya di setiap momen kecil.\n\nIa mulai mempraktikkan mindfulness dalam kesehariannya: berjalan ke kantor dengan mengamati pohon-pohon di pinggir jalan, mendengarkan rekan kerja tanpa menyela, dan menikmati secangkir kopi pagi dengan penuh kesadaran. Hidupnya tidak lagi bising. Maya telah menemukan jangkar ketenangannya di tengah badai kesibukan dunia.',
+        ),
+      ],
+    ),
+    BookModel(
+      id: 'b7',
+      title: 'Seni Merajut Hati Setelah Berpisah',
+      author: 'Tim Konselor RiseUp',
+      duration: '15 Menit Baca',
+      coverColors: [0xFFEF4444, 0xFFF87171],
+      icon: 'self_improvement',
+      chapters: [
+        BookChapter(
+          title: 'Bab 1: Retakan Pertama',
+          content: 'Ketika hubungan berakhir, rasanya seperti ada dunia yang runtuh tiba-tiba. Keheningan yang mengikuti ucapan perpisahan itu terasa memekakkan telinga. Sadarilah bahwa shock dan kebingungan ini adalah hal yang wajar; hati Anda sedang menyesuaikan diri dengan guncangan awal.',
+        ),
+        BookChapter(
+          title: 'Bab 2: Membiarkan Air Mata Mengalir',
+          content: 'Menangis bukanlah tanda kelemahan, melainkan proses pelepasan emosi yang menumpuk. Jangan menahan air mata atau berpura-pura tegar. Berikan izin pada diri Anda untuk berduka atas kehilangan ini.',
+        ),
+        BookChapter(
+          title: 'Bab 3: Mengakui Rasa Sakit',
+          content: 'Rasa sakit pasca-perpisahan nyata adanya, baik secara emosional maupun fisik. Mengakui bahwa Anda sedang terluka adalah langkah awal untuk menyembuhkan luka tersebut. Jangan buru-buru menyangkalnya.',
+        ),
+        BookChapter(
+          title: 'Bab 4: Menghentikan Pencarian Jawaban',
+          content: 'Kita sering terjebak memikirkan "bagaimana jika" atau mencari tahu alasan detail perpisahan. Terkadang, penutupan terbaik bukanlah penjelasan dari mantan pasangan, melainkan keputusan Anda sendiri untuk merelakan.',
+        ),
+        BookChapter(
+          title: 'Bab 5: Menjauh dari Bayang Masa Lalu',
+          content: 'Jarak sangat diperlukan untuk penyembuhan. Hindari terus memeriksa media sosial mantan atau membaca ulang pesan lama. Berikan ruang bagi diri Anda untuk bernapas tanpa bayang-bayang masa lalu.',
+        ),
+        BookChapter(
+          title: 'Bab 6: Menerima Realitas Baru',
+          content: 'Hubungan itu telah usai, dan itu adalah kenyataan saat ini. Menerima kenyataan ini bukan berarti Anda menyukainya, melainkan berhenti berjuang melawan fakta yang tidak bisa diubah.',
+        ),
+        BookChapter(
+          title: 'Bab 7: Berhenti Menyalahkan Diri',
+          content: 'Satu hubungan dijalani oleh dua orang, begitu pula saat ia usai. Berhentilah menyalahkan diri sendiri atas kegagalan ini secara sepihak. Jadikan ini pelajaran berharga, bukan beban bersalah.',
+        ),
+        BookChapter(
+          title: 'Bab 8: Menemukan Kembali Suaramu',
+          content: 'Terkadang kita kehilangan sebagian identitas kita demi menyenangkan pasangan. Sekarang adalah waktu yang tepat untuk menemukan kembali apa yang Anda sukai, apa impian Anda, dan siapa diri Anda sebenarnya.',
+        ),
+        BookChapter(
+          title: 'Bab 9: Menghargai Ruang Kosong',
+          content: 'Kesepian akan datang menghampiri, terutama di malam hari. Namun, ubahlah ruang kosong ini menjadi ruang tumbuh. Kesunyian adalah tempat terbaik untuk mendengarkan kebutuhan terdalam diri Anda.',
+        ),
+        BookChapter(
+          title: 'Bab 10: Mengurai Harapan yang Pupus',
+          content: 'Merelakan berarti mengikhlaskan masa depan yang sempat Anda rencanakan bersamanya. Biarkan rencana itu pergi untuk memberi jalan bagi masa depan baru yang sedang menunggu untuk Anda tulis.',
+        ),
+        BookChapter(
+          title: 'Bab 11: Belajar Bernapas Kembali',
+          content: 'Jangan lupakan kesehatan fisik Anda. Makanlah makanan bergizi, minumlah air yang cukup, dan berjalan-jalanlah di bawah sinar matahari. Jiwa yang lelah membutuhkan tubuh yang sehat sebagai penyangganya.',
+        ),
+        BookChapter(
+          title: 'Bab 12: Teman di Kala Sepi',
+          content: 'Anda tidak harus melalui semua ini sendirian. Hubungi sahabat karib atau keluarga yang mendukung Anda. Berbagi cerita dengan orang yang tulus peduli akan meringankan separuh beban di pundak Anda.',
+        ),
+        BookChapter(
+          title: 'Bab 13: Menulis Surat yang Tak Dikirim',
+          content: 'Tuliskan semua kemarahan, kesedihan, dan kerinduan Anda di selembar kertas. Tumpahkan semuanya tanpa saringan, lalu hancurkan kertas tersebut. Ini adalah teknik pelepasan emosi yang sangat terapeutik.',
+        ),
+        BookChapter(
+          title: 'Bab 14: Mengampuni Tanpa Kata Maaf',
+          content: 'Memaafkan mantan pasangan (dan diri Anda sendiri) bukan berarti membenarkan kesalahan mereka, melainkan melepaskan racun kebencian dari hati Anda agar Anda bisa melangkah tanpa beban dendam.',
+        ),
+        BookChapter(
+          title: 'Bab 15: Menemukan Makna dari Luka',
+          content: 'Setiap luka membawa kebijaksanaan. Tanyakan pada diri Anda: "Pelajaran apa yang bisa saya ambil dari hubungan ini untuk hubungan saya di masa depan?" Kegagalan ini melatih Anda menjadi lebih dewasa.',
+        ),
+        BookChapter(
+          title: 'Bab 16: Seni Mencintai Diri Sendiri',
+          content: 'Mulailah memperlakukan diri Anda dengan penuh kasih sayang. Belilah hadiah kecil untuk diri sendiri, lakukan hobi baru, dan bicaralah pada diri Anda dengan kata-kata yang lembut dan menguatkan.',
+        ),
+        BookChapter(
+          title: 'Bab 17: Mimpi Baru di Ujung Jalan',
+          content: 'Lembaran baru telah terbuka. Tulislah tujuan hidup baru yang sepenuhnya berfokus pada kebahagiaan dan perkembangan diri Anda. Masa depan Anda masih sangat panjang dan penuh peluang.',
+        ),
+        BookChapter(
+          title: 'Bab 18: Kebaikan Kecil Setiap Hari',
+          content: 'Fokuslah pada hari ini. Lakukan satu kebaikan kecil untuk diri Anda atau orang lain setiap hari. Langkah-langkah kecil inilah yang secara perlahan akan membangun kembali hidup Anda yang baru.',
+        ),
+        BookChapter(
+          title: 'Bab 19: Kesiapan untuk Terbuka Lagi',
+          content: 'Akan tiba harinya ketika ingatan masa lalu tidak lagi terasa menyakitkan. Jangan menutup hati Anda selamanya. Ketika saatnya tiba, Anda akan siap mencintai dan dicintai lagi dengan lebih bijak.',
+        ),
+        BookChapter(
+          title: 'Bab 20: Jiwa yang Utuh Kembali',
+          content: 'Lihatlah ke belakang dan sadarilah seberapa jauh Anda telah melangkah. Anda berhasil melewati badai tersebut dan tumbuh menjadi pribadi yang lebih tangguh, bijaksana, dan utuh. Anda berharga apa adanya.',
+        ),
+      ],
+    ),
+  ];
+
+  final StreamController<List<BookModel>> _mockBooksController = StreamController<List<BookModel>>.broadcast();
+
+  void _updateMockBooksStream() {
+    _mockBooksController.add(List.from(_mockBooks));
+  }
 
   // StreamControllers untuk real-time update dalam mode Mock
   final StreamController<List<UserModel>> _mockUsersController = StreamController<List<UserModel>>.broadcast();
@@ -198,6 +426,17 @@ class FirestoreService {
         await doc.reference.delete();
       }
     }
+
+    final defaultBookTitles = _mockBooks.map((e) => e.title).toSet();
+    final bukuSnap = await _db!.collection('buku').get();
+    for (final doc in bukuSnap.docs) {
+      final title = doc.data()['title'] as String?;
+      if (title != null && defaultBookTitles.contains(title)) {
+        if (doc.id != 'b1' && doc.id != 'b2' && doc.id != 'b3' && doc.id != 'b4' && doc.id != 'b5' && doc.id != 'b6' && doc.id != 'b7') {
+          await doc.reference.delete();
+        }
+      }
+    }
     
     final batch = _db!.batch();
     
@@ -218,9 +457,15 @@ class FirestoreService {
       final docRef = _db!.collection('aturan').doc(r.code);
       batch.set(docRef, r.toMap());
     }
+
+    // Seed books
+    for (final b in _mockBooks) {
+      final docRef = _db!.collection('buku').doc(b.id);
+      batch.set(docRef, b.toMap());
+    }
     
     await batch.commit();
-    debugPrint("Berhasil melakukan auto-seed data gejala, gangguan, dan aturan ke Firestore.");
+    debugPrint("Berhasil melakukan auto-seed data gejala, gangguan, aturan, dan buku ke Firestore.");
   }
 
   // --- Users CRUD ---
@@ -374,6 +619,17 @@ class FirestoreService {
     } else {
       return _db!.collection('riwayat_tes').orderBy('tanggal', descending: true).snapshots().map((snap) =>
           snap.docs.map((doc) => HistoryModel.fromMap(doc.data(), doc.id)).toList());
+    }
+  }
+
+  // Stream buku/novel untuk update real-time
+  Stream<List<BookModel>> getBooksStream() {
+    if (_useMock) {
+      Timer(Duration.zero, () => _updateMockBooksStream());
+      return _mockBooksController.stream;
+    } else {
+      return _db!.collection('buku').snapshots().map((snap) =>
+          snap.docs.map((doc) => BookModel.fromMap(doc.data(), doc.id)).toList());
     }
   }
 
@@ -772,6 +1028,56 @@ class FirestoreService {
       for (final doc in snap.docs) {
         await doc.reference.delete();
       }
+    }
+  }
+
+  // --- Books CRUD ---
+  Future<void> addBook(BookModel book) async {
+    if (_useMock) {
+      final newBook = BookModel(
+        id: 'mock-b-${DateTime.now().millisecondsSinceEpoch}',
+        title: book.title,
+        author: book.author,
+        duration: book.duration,
+        coverColors: book.coverColors,
+        icon: book.icon,
+        chapters: book.chapters,
+      );
+      _mockBooks.add(newBook);
+      _updateMockBooksStream();
+    } else {
+      final docRef = _db!.collection('buku').doc();
+      final newBook = BookModel(
+        id: docRef.id,
+        title: book.title,
+        author: book.author,
+        duration: book.duration,
+        coverColors: book.coverColors,
+        icon: book.icon,
+        chapters: book.chapters,
+      );
+      await docRef.set(newBook.toMap());
+    }
+  }
+
+  Future<void> updateBook(BookModel book) async {
+    if (_useMock) {
+      final idx = _mockBooks.indexWhere((b) => b.id == book.id);
+      if (idx != -1) {
+        _mockBooks[idx] = book;
+        _updateMockBooksStream();
+      }
+    } else {
+      await _db!.collection('buku').doc(book.id).set(book.toMap());
+    }
+  }
+
+  Future<void> deleteBook(String id) async {
+    if (_useMock) {
+      _mockBooks.removeWhere((b) => b.id == id);
+      _updateMockBooksStream();
+    } else {
+      await _db!.collection('buku').doc(id).delete();
     }
   }
 }

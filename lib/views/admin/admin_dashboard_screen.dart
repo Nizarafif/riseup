@@ -7,6 +7,7 @@ import 'widgets/rules_manager.dart';
 import 'widgets/diseases_manager.dart';
 import 'widgets/stats_trends_manager.dart';
 import 'widgets/poster_manager.dart';
+import 'widgets/books_manager.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -50,6 +51,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     } else if (widget.initialTabIndex == 4) {
       title = 'Poster Edukasi';
       manager = const PosterManager();
+    } else if (widget.initialTabIndex == 5) {
+      title = 'Manajemen Buku & Novel';
+      manager = const BooksManager();
     }
 
     Navigator.push(
@@ -401,6 +405,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: Icons.photo_library_rounded,
                 iconColor: const Color(0xFF6C63FF),
                 destination: const PosterManager(),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuCard(
+                context,
+                title: 'Manajemen Buku & Novel',
+                subtitle: 'Kelola perpustakaan online buku saku & novel ketenangan',
+                icon: Icons.menu_book_rounded,
+                iconColor: const Color(0xFF0284C7),
+                destination: const BooksManager(),
               ),
               const SizedBox(height: 40),
             ],
