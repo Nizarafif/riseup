@@ -15,6 +15,7 @@ import 'widgets/breathing_modal.dart';
 import 'widgets/home_tab.dart';
 import 'widgets/screening_tab.dart';
 import 'widgets/settings_tab.dart';
+import 'widgets/book_reader.dart';
 import '../screening/map_webview_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -225,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showDailyScreeningReminderDialog() {
     showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
@@ -275,38 +276,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
             vertical: 16,
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Nanti Saja',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-              child: const Text(
-                'Mulai Skrining',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                child: const Text(
+                  'Mulai Skrining',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
@@ -319,7 +311,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _showWelcomeTestDialog() {
     showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
@@ -369,38 +361,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
             vertical: 16,
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Nanti Saja',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-              child: const Text(
-                'Mulai Tes Sekarang',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                child: const Text(
+                  'Mulai Tes Sekarang',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
@@ -433,6 +416,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const AmbientMusicSheet(),
+    );
+  }
+
+  void _showBookReader() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const BookReaderScreen()),
     );
   }
 
@@ -567,12 +556,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 closedLeft: screenWidth / 2 - 60,
               ),
               _buildFloatingItem(
-                icon: Icons.psychology_rounded,
-                label: 'Tes Pakar',
+                icon: Icons.menu_book_rounded,
+                label: 'Baca Buku',
                 color: const Color(0xFF00C9A7),
                 onTap: () {
                   setState(() => _isMenuOpen = false);
-                  DashboardScreen.startScreeningTest(context, Provider.of<DiagnosticProvider>(context, listen: false));
+                  _showBookReader();
                 },
                 isOpen: _isMenuOpen,
                 targetBottom: 175,

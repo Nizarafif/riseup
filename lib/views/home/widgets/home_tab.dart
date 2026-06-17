@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../../../providers/auth_provider.dart';
 import '../../../providers/mood_provider.dart';
 import '../../../models/user_model.dart';
+import '../../../models/mood_model.dart';
 import '../../../widgets/mood_theme_helper.dart';
 import '../../../providers/diagnostic_provider.dart';
 import 'breathing_modal.dart';
@@ -417,6 +418,281 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  void _showMoodDetail(
+    BuildContext context,
+    MoodModel mood,
+    int paletteIdx,
+    int emojiThemeIdx,
+    bool isDarkBg,
+  ) {
+    final monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    final dateStr = '${mood.tanggal.day} ${monthNames[mood.tanggal.month - 1]} ${mood.tanggal.year}';
+    final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+    final textColor = isDarkBg ? Colors.white : const Color(0xFF1E293B);
+    final subtitleColor = isDarkBg ? Colors.white70 : const Color(0xFF64748B);
+    
+    final moodColor = MoodThemeHelper.getMoodColor(paletteIdx, mood.moodLevel);
+    final buttonTextColor = moodColor.computeLuminance() > 0.5 ? const Color(0xFF1F2937) : Colors.white;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: dialogBgColor,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      dateStr,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: subtitleColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20),
+                      color: subtitleColor,
+                      onPressed: () => Navigator.pop(context),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                MoodEmojiWidget(
+                  level: mood.moodLevel,
+                  size: 64,
+                  paletteIndex: paletteIdx,
+                  emojiThemeIndex: emojiThemeIdx,
+                  isSelected: true,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  MoodThemeHelper.getMoodName(mood.moodLevel),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: moodColor,
+                  ),
+                ),
+                if (mood.catatan != null && mood.catatan!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDarkBg ? Colors.white.withOpacity(0.05) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDarkBg ? Colors.white10 : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Text(
+                      mood.catatan!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: textColor,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: moodColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      'Tutup',
+                      style: TextStyle(color: buttonTextColor, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMoodCalendarCard(
+    int paletteIdx,
+    int emojiThemeIdx,
+    bool isDarkBg,
+  ) {
+    final cardBg = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+    final textColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+    final subtitleColor = isDarkBg ? Colors.white70 : const Color(0xFF707070);
+    final borderColor = isDarkBg
+        ? Colors.white10
+        : const Color(0xFF6C63FF).withOpacity(0.03);
+
+    final now = DateTime.now();
+    final year = now.year;
+    final month = now.month;
+
+    final monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    final monthName = '${monthNames[month - 1]} $year';
+
+    final firstDayOfMonth = DateTime(year, month, 1);
+    final startWeekday = firstDayOfMonth.weekday - 1; // 0 for Monday, 6 for Sunday
+    final totalDays = DateTime(year, month + 1, 0).day;
+
+    final moods = Provider.of<MoodProvider>(context).moods;
+    final Map<int, MoodModel> moodMap = {};
+    for (final mood in moods) {
+      final date = mood.tanggal;
+      if (date.year == year && date.month == month) {
+        moodMap[date.day] = mood;
+      }
+    }
+
+    final daysOfWeek = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkBg ? 0.25 : 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Kalender Mood',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: textColor,
+                ),
+              ),
+              Text(
+                monthName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: const Color(0xFF6C63FF),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Day labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: daysOfWeek.map((day) {
+              return SizedBox(
+                width: 32,
+                child: Text(
+                  day,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: subtitleColor,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          // Grid
+          GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: startWeekday + totalDays,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+            ),
+             itemBuilder: (context, index) {
+              if (index < startWeekday) {
+                return const SizedBox();
+              }
+              final day = index - startWeekday + 1;
+              final hasMood = moodMap.containsKey(day);
+              final isToday = day == now.day;
+
+              Color cellColor = isDarkBg ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9);
+              Color textCellColor = isDarkBg ? Colors.white70 : const Color(0xFF475569);
+              BoxBorder? border;
+
+              if (isToday) {
+                border = Border.all(
+                  color: const Color(0xFF6C63FF),
+                  width: 2,
+                );
+              }
+
+              return GestureDetector(
+                onTap: hasMood
+                    ? () => _showMoodDetail(context, moodMap[day]!, paletteIdx, emojiThemeIdx, isDarkBg)
+                    : null,
+                child: Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: hasMood ? Colors.transparent : cellColor,
+                    shape: BoxShape.circle,
+                    border: border,
+                  ),
+                  child: hasMood
+                      ? MoodEmojiWidget(
+                          level: moodMap[day]!.moodLevel,
+                          size: 34,
+                          paletteIndex: paletteIdx,
+                          emojiThemeIndex: emojiThemeIdx,
+                          isSelected: false,
+                        )
+                      : Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                            color: textCellColor,
+                          ),
+                        ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -460,6 +736,8 @@ class _HomeTabState extends State<HomeTab> {
           HealthBannerCarousel(isDarkBg: isDarkBg),
           const SizedBox(height: 24),
           _buildMoodTrackerCard(paletteIdx, emojiThemeIdx, widget.user, isDarkBg),
+          const SizedBox(height: 24),
+          _buildMoodCalendarCard(paletteIdx, emojiThemeIdx, isDarkBg),
           const SizedBox(height: 24),
           _buildBreathingCard(isDarkBg),
         ],
