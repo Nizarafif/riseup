@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/diagnostic_provider.dart';
+import '../../../models/rule_model.dart';
 import 'admin_dialogs.dart';
 
 class RulesManager extends StatelessWidget {
@@ -20,185 +21,546 @@ class RulesManager extends StatelessWidget {
         return StatefulBuilder(
           builder: (dialogCtx, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              backgroundColor: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C9A7).withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.rule_rounded, color: Color(0xFF00C9A7), size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              'Tambah Aturan Baru',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B), fontSize: 16),
-                            ),
-                          ],
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Colors.transparent,
+              elevation: 8,
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Top accent cyan bar
+                    Container(
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF00C9A7), Color(0xFF5BE7C4)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        const Divider(color: Color(0xFFF1F5F9), thickness: 1, height: 24),
-                        const SizedBox(height: 4),
-                        TextFormField(
-                          controller: codeController,
-                          decoration: InputDecoration(
-                            labelText: 'Kode Aturan',
-                            hintText: 'Contoh: R005',
-                            labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 2),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          validator: (val) => val == null || val.isEmpty ? 'Kode tidak boleh kosong' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Pilih Gangguan (THEN):',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: selectedDiseaseCode,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 2),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          dropdownColor: Colors.white,
-                          items: diagProvider.diseases.map((d) {
-                            return DropdownMenuItem(
-                              value: d.code,
-                              child: Text('[${d.code}] ${d.name}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() => selectedDiseaseCode = val);
-                          },
-                          validator: (val) => val == null ? 'Pilih kesimpulan gangguan' : null,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Pilih Gejala Prasyarat (IF):',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 180),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-                            borderRadius: BorderRadius.circular(12),
-                            color: const Color(0xFFF8FAFC),
-                          ),
-                          child: ListView(
-                            shrinkWrap: true,
-                            children: diagProvider.symptoms.map((symptom) {
-                              final isChecked = selectedGejala.contains(symptom.code);
-                              return CheckboxListTile(
-                                value: isChecked,
-                                activeColor: const Color(0xFF00C9A7),
-                                checkColor: Colors.white,
-                                title: Text(
-                                  '[${symptom.code}] ${symptom.name}',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
-                                ),
-                                controlAffinity: ListTileControlAffinity.leading,
-                                dense: true,
-                                onChanged: (val) {
-                                  setState(() {
-                                    if (val == true) {
-                                      selectedGejala.add(symptom.code);
-                                    } else {
-                                      selectedGejala.remove(symptom.code);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(dialogCtx),
-                              child: const Text('Batal', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: selectedGejala.isEmpty || selectedDiseaseCode == null
-                                  ? null
-                                  : () async {
-                                      if (formKey.currentState!.validate()) {
-                                        await diagProvider.addRule(
-                                          codeController.text.trim().toUpperCase(),
-                                          selectedGejala,
-                                          selectedDiseaseCode!,
-                                        );
-                                        if (dialogCtx.mounted) {
-                                          Navigator.pop(dialogCtx);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Aturan baru berhasil disimpan!'),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF00C9A7),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey[200],
-                                disabledForegroundColor: Colors.grey[400],
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              ),
-                              child: const Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00C9A7).withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: const Color(0xFF00C9A7).withOpacity(0.15),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.rule_rounded, color: Color(0xFF00C9A7), size: 22),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  const Text(
+                                    'Tambah Aturan Baru',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 16,
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 16),
+                                height: 1,
+                                color: const Color(0xFFF1F5F9),
+                              ),
+                              TextFormField(
+                                controller: codeController,
+                                decoration: InputDecoration(
+                                  labelText: 'Kode Aturan',
+                                  hintText: 'Contoh: R005',
+                                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B), fontSize: 13),
+                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 1.5),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                ),
+                                validator: (val) => val == null || val.isEmpty ? 'Kode tidak boleh kosong' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Pilih Gangguan (THEN):',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
+                                value: selectedDiseaseCode,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 1.5),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                dropdownColor: Colors.white,
+                                items: () {
+                                  final seen = <String>{};
+                                  return diagProvider.diseases
+                                      .where((d) => seen.add(d.code))
+                                      .map((d) => DropdownMenuItem(
+                                            value: d.code,
+                                            child: Text(
+                                              '[${d.code}] ${d.name}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ))
+                                      .toList();
+                                }(),
+                                onChanged: (val) {
+                                  setState(() => selectedDiseaseCode = val);
+                                },
+                                validator: (val) => val == null ? 'Pilih kesimpulan gangguan' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Pilih Gejala Prasyarat (IF):',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 180),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                                  borderRadius: BorderRadius.circular(14),
+                                  color: const Color(0xFFF8FAFC),
+                                ),
+                                child: ListView(
+                                  shrinkWrap: true,
+                                  children: diagProvider.symptoms.map((symptom) {
+                                    final isChecked = selectedGejala.contains(symptom.code);
+                                    return CheckboxListTile(
+                                      value: isChecked,
+                                      activeColor: const Color(0xFF00C9A7),
+                                      checkColor: Colors.white,
+                                      title: Text(
+                                        '[${symptom.code}] ${symptom.name}',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      ),
+                                      controlAffinity: ListTileControlAffinity.leading,
+                                      dense: true,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          if (val == true) {
+                                            selectedGejala.add(symptom.code);
+                                          } else {
+                                            selectedGejala.remove(symptom.code);
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF64748B),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text(
+                                      'Batal',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF00C9A7), Color(0xFF5BE7C4)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF00C9A7).withOpacity(0.25),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: selectedGejala.isEmpty || selectedDiseaseCode == null
+                                          ? null
+                                          : () async {
+                                              if (formKey.currentState!.validate()) {
+                                                await diagProvider.addRule(
+                                                  codeController.text.trim().toUpperCase(),
+                                                  selectedGejala,
+                                                  selectedDiseaseCode!,
+                                                );
+                                                if (dialogCtx.mounted) {
+                                                  Navigator.pop(dialogCtx);
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Aturan baru berhasil disimpan!'),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                        disabledBackgroundColor: Colors.transparent,
+                                        disabledForegroundColor: Colors.white60,
+                                      ),
+                                      child: const Text(
+                                        'Simpan',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditRuleDialog(BuildContext context, RuleModel rule) {
+    final codeController = TextEditingController(text: rule.code);
+    final formKey = GlobalKey<FormState>();
+    final List<String> selectedGejala = List<String>.from(rule.gejalaRequired);
+    final diagProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+    final hasDisease = diagProvider.diseases.any((d) => d.code == rule.hasilGangguan);
+    String? selectedDiseaseCode = hasDisease ? rule.hasilGangguan : null;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Colors.transparent,
+              elevation: 8,
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Top accent cyan bar
+                    Container(
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF00C9A7), Color(0xFF5BE7C4)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                        child: Form(
+                          key: formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 42,
+                                    height: 42,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00C9A7).withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: const Color(0xFF00C9A7).withOpacity(0.15),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(Icons.edit_note_rounded, color: Color(0xFF00C9A7), size: 22),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  const Text(
+                                    'Edit Aturan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 16,
+                                      letterSpacing: 0.1,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 16),
+                                height: 1,
+                                color: const Color(0xFFF1F5F9),
+                              ),
+                              TextFormField(
+                                controller: codeController,
+                                decoration: InputDecoration(
+                                  labelText: 'Kode Aturan',
+                                  hintText: 'Contoh: R005',
+                                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF64748B), fontSize: 13),
+                                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 1.5),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                ),
+                                validator: (val) => val == null || val.isEmpty ? 'Kode tidak boleh kosong' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Pilih Gangguan (THEN):',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
+                                value: selectedDiseaseCode,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF8FAFC),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFF00C9A7), width: 1.5),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                dropdownColor: Colors.white,
+                                items: () {
+                                  final seen = <String>{};
+                                  return diagProvider.diseases
+                                      .where((d) => seen.add(d.code))
+                                      .map((d) => DropdownMenuItem(
+                                            value: d.code,
+                                            child: Text(
+                                              '[${d.code}] ${d.name}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ))
+                                      .toList();
+                                }(),
+                                onChanged: (val) {
+                                  setState(() => selectedDiseaseCode = val);
+                                },
+                                validator: (val) => val == null ? 'Pilih kesimpulan gangguan' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Pilih Gejala Prasyarat (IF):',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF475569)),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 180),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                                  borderRadius: BorderRadius.circular(14),
+                                  color: const Color(0xFFF8FAFC),
+                                ),
+                                child: ListView(
+                                  shrinkWrap: true,
+                                  children: diagProvider.symptoms.map((symptom) {
+                                    final isChecked = selectedGejala.contains(symptom.code);
+                                    return CheckboxListTile(
+                                      value: isChecked,
+                                      activeColor: const Color(0xFF00C9A7),
+                                      checkColor: Colors.white,
+                                      title: Text(
+                                        '[${symptom.code}] ${symptom.name}',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      ),
+                                      controlAffinity: ListTileControlAffinity.leading,
+                                      dense: true,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          if (val == true) {
+                                            selectedGejala.add(symptom.code);
+                                          } else {
+                                            selectedGejala.remove(symptom.code);
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(dialogCtx),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFF64748B),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    child: const Text(
+                                      'Batal',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF00C9A7), Color(0xFF5BE7C4)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF00C9A7).withOpacity(0.25),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: selectedGejala.isEmpty || selectedDiseaseCode == null
+                                          ? null
+                                          : () async {
+                                              if (formKey.currentState!.validate()) {
+                                                await diagProvider.updateRule(
+                                                  rule.id,
+                                                  codeController.text.trim().toUpperCase(),
+                                                  selectedGejala,
+                                                  selectedDiseaseCode!,
+                                                );
+                                                if (dialogCtx.mounted) {
+                                                  Navigator.pop(dialogCtx);
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text('Perubahan aturan berhasil disimpan!'),
+                                                      backgroundColor: Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                        disabledBackgroundColor: Colors.transparent,
+                                        disabledForegroundColor: Colors.white60,
+                                      ),
+                                      child: const Text(
+                                        'Simpan',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -273,21 +635,38 @@ class RulesManager extends StatelessWidget {
                                     style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD97706), fontSize: 10, letterSpacing: 0.5),
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () async {
-                                    final confirm = await AdminDialogs.showConfirmDelete(context, 'Aturan ${rule.code}');
-                                    if (confirm == true) {
-                                      await diagnosticProvider.deleteRule(rule.id);
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFFFFF1F2),
-                                      shape: BoxShape.circle,
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => _showEditRuleDialog(context, rule),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF00C9A7).withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.edit_rounded, color: Color(0xFF00C9A7), size: 16),
+                                      ),
                                     ),
-                                    child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 16),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () async {
+                                        final confirm = await AdminDialogs.showConfirmDelete(context, 'Aturan ${rule.code}');
+                                        if (confirm == true) {
+                                          await diagnosticProvider.deleteRule(rule.id);
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFFFF1F2),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 16),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

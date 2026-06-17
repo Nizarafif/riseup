@@ -250,6 +250,13 @@ class DiagnosticProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateSymptom(String id, String code, String name) async {
+    final symptom = SymptomModel(id: id, code: code, name: name);
+    await _dbService.updateSymptom(symptom);
+    _symptoms = await _dbService.getSymptoms();
+    notifyListeners();
+  }
+
   // --- Diseases ---
   Future<void> addDisease(String code, String name, String description, List<String> solutions) async {
     final disease = DiseaseModel(
@@ -266,6 +273,19 @@ class DiagnosticProvider extends ChangeNotifier {
 
   Future<void> deleteDisease(String id) async {
     await _dbService.deleteDisease(id);
+    _diseases = await _dbService.getDiseases();
+    notifyListeners();
+  }
+
+  Future<void> updateDisease(String id, String code, String name, String description, List<String> solutions) async {
+    final disease = DiseaseModel(
+      id: id,
+      code: code,
+      name: name,
+      description: description,
+      solutions: solutions,
+    );
+    await _dbService.updateDisease(disease);
     _diseases = await _dbService.getDiseases();
     notifyListeners();
   }
@@ -289,6 +309,18 @@ class DiagnosticProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateRule(String id, String code, List<String> gejalaRequired, String hasilGangguan) async {
+    final rule = RuleModel(
+      id: id,
+      code: code,
+      gejalaRequired: gejalaRequired,
+      hasilGangguan: hasilGangguan,
+    );
+    await _dbService.updateRule(rule);
+    _rules = await _dbService.getRules();
+    notifyListeners();
+  }
+
   // --- Register New Admin ---
   Future<void> registerNewAdmin(String name, String email, String password) async {
     _isLoading = true;
@@ -304,6 +336,21 @@ class DiagnosticProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // --- Delete User ---
+  Future<void> deleteUser(String uid) async {
+    try {
+      await _dbService.deleteUser(uid);
+      if (_usersSubscription == null) {
+        _allUsers = await _dbService.getAllUsers();
+        _allHistories = await _dbService.getAllHistory();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Gagal menghapus pengguna: $e");
+      rethrow;
     }
   }
 

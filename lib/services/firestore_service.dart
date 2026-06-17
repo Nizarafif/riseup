@@ -171,23 +171,51 @@ class FirestoreService {
   Future<void> seedDefaultData() async {
     if (_useMock || _db == null) return;
     
+    // 1. Hapus hanya dokumen duplikat default yang ber-ID acak agar data kustom tidak hilang
+    final defaultSymptomCodes = _mockSymptoms.map((e) => e.code).toSet();
+    final gejalaSnap = await _db!.collection('gejala').get();
+    for (final doc in gejalaSnap.docs) {
+      final code = doc.data()['code'] as String?;
+      if (code != null && defaultSymptomCodes.contains(code) && doc.id != code) {
+        await doc.reference.delete();
+      }
+    }
+    
+    final defaultDiseaseCodes = _mockDiseases.map((e) => e.code).toSet();
+    final gangguanSnap = await _db!.collection('gangguan').get();
+    for (final doc in gangguanSnap.docs) {
+      final code = doc.data()['code'] as String?;
+      if (code != null && defaultDiseaseCodes.contains(code) && doc.id != code) {
+        await doc.reference.delete();
+      }
+    }
+    
+    final defaultRuleCodes = _mockRules.map((e) => e.code).toSet();
+    final aturanSnap = await _db!.collection('aturan').get();
+    for (final doc in aturanSnap.docs) {
+      final code = doc.data()['code'] as String?;
+      if (code != null && defaultRuleCodes.contains(code) && doc.id != code) {
+        await doc.reference.delete();
+      }
+    }
+    
     final batch = _db!.batch();
     
     // Seed symptoms
     for (final s in _mockSymptoms) {
-      final docRef = _db!.collection('gejala').doc();
+      final docRef = _db!.collection('gejala').doc(s.code);
       batch.set(docRef, s.toMap());
     }
     
     // Seed diseases
     for (final d in _mockDiseases) {
-      final docRef = _db!.collection('gangguan').doc();
+      final docRef = _db!.collection('gangguan').doc(d.code);
       batch.set(docRef, d.toMap());
     }
     
     // Seed rules
     for (final r in _mockRules) {
-      final docRef = _db!.collection('aturan').doc();
+      final docRef = _db!.collection('aturan').doc(r.code);
       batch.set(docRef, r.toMap());
     }
     
@@ -234,6 +262,35 @@ class FirestoreService {
         return UserModel.fromMap(doc.data()!, doc.id);
       }
       return null;
+    }
+  }
+
+  Future<void> deleteUser(String uid) async {
+    if (_useMock) {
+      _mockUsers.removeWhere((u) => u.uid == uid);
+      _mockHistory.removeWhere((h) => h.userId == uid);
+      _mockMoods.removeWhere((m) => m.userId == uid);
+      _updateMockUsersStream();
+      _updateMockHistoryStream();
+    } else {
+      // 1. Hapus dokumen profil user
+      await _db!.collection('users').doc(uid).delete();
+      
+      // 2. Hapus seluruh riwayat skrining user
+      final historySnap = await _db!.collection('riwayat_tes').where('userId', isEqualTo: uid).get();
+      final historyBatch = _db!.batch();
+      for (final doc in historySnap.docs) {
+        historyBatch.delete(doc.reference);
+      }
+      await historyBatch.commit();
+
+      // 3. Hapus seluruh catatan mood tracker user
+      final moodSnap = await _db!.collection('mood_tracker').where('userId', isEqualTo: uid).get();
+      final moodBatch = _db!.batch();
+      for (final doc in moodSnap.docs) {
+        moodBatch.delete(doc.reference);
+      }
+      await moodBatch.commit();
     }
   }
 
@@ -340,7 +397,7 @@ class FirestoreService {
       _mockSymptoms.add(newSymptom);
       _mockSymptoms.sort((a, b) => a.code.compareTo(b.code));
     } else {
-      await _db!.collection('gejala').add(symptom.toMap());
+      await _db!.collection('gejala').doc(symptom.code).set(symptom.toMap());
     }
   }
 
@@ -349,6 +406,18 @@ class FirestoreService {
       _mockSymptoms.removeWhere((s) => s.id == id);
     } else {
       await _db!.collection('gejala').doc(id).delete();
+    }
+  }
+
+  Future<void> updateSymptom(SymptomModel symptom) async {
+    if (_useMock) {
+      final idx = _mockSymptoms.indexWhere((s) => s.id == symptom.id);
+      if (idx != -1) {
+        _mockSymptoms[idx] = symptom;
+        _mockSymptoms.sort((a, b) => a.code.compareTo(b.code));
+      }
+    } else {
+      await _db!.collection('gejala').doc(symptom.id).update(symptom.toMap());
     }
   }
 
@@ -374,7 +443,7 @@ class FirestoreService {
       _mockDiseases.add(newDisease);
       _mockDiseases.sort((a, b) => a.code.compareTo(b.code));
     } else {
-      await _db!.collection('gangguan').add(disease.toMap());
+      await _db!.collection('gangguan').doc(disease.code).set(disease.toMap());
     }
   }
 
@@ -383,6 +452,18 @@ class FirestoreService {
       _mockDiseases.removeWhere((d) => d.id == id);
     } else {
       await _db!.collection('gangguan').doc(id).delete();
+    }
+  }
+
+  Future<void> updateDisease(DiseaseModel disease) async {
+    if (_useMock) {
+      final idx = _mockDiseases.indexWhere((d) => d.id == disease.id);
+      if (idx != -1) {
+        _mockDiseases[idx] = disease;
+        _mockDiseases.sort((a, b) => a.code.compareTo(b.code));
+      }
+    } else {
+      await _db!.collection('gangguan').doc(disease.id).update(disease.toMap());
     }
   }
 
@@ -407,7 +488,7 @@ class FirestoreService {
       _mockRules.add(newRule);
       _mockRules.sort((a, b) => a.code.compareTo(b.code));
     } else {
-      await _db!.collection('aturan').add(rule.toMap());
+      await _db!.collection('aturan').doc(rule.code).set(rule.toMap());
     }
   }
 
@@ -416,6 +497,18 @@ class FirestoreService {
       _mockRules.removeWhere((r) => r.id == id);
     } else {
       await _db!.collection('aturan').doc(id).delete();
+    }
+  }
+
+  Future<void> updateRule(RuleModel rule) async {
+    if (_useMock) {
+      final idx = _mockRules.indexWhere((r) => r.id == rule.id);
+      if (idx != -1) {
+        _mockRules[idx] = rule;
+        _mockRules.sort((a, b) => a.code.compareTo(b.code));
+      }
+    } else {
+      await _db!.collection('aturan').doc(rule.id).update(rule.toMap());
     }
   }
 
