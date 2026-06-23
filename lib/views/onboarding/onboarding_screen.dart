@@ -26,9 +26,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       themeColor: const Color(0xFFFF9F64),
     ),
     OnboardingData(
-      title: 'Monitoring Sistem Pakar',
+      title: 'Monitoring Kesehatan Mental',
       description:
-          'Identifikasi kondisi psikologismu secara dini melalui kuesioner interaktif berbasis sistem pakar Forward Chaining yang tepercaya.',
+          'Pantau dan deteksi awal kondisi kesehatan mentalmu secara mandiri melalui kuesioner interaktif berbasis sistem pakar yang tepercaya.',
       gradientStart: const Color(0xFFF0EDFF),
       gradientEnd: const Color(0xFFF7F5FF),
       themeColor: const Color(0xFF6C63FF),
