@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/diagnostic_provider.dart';
+import '../auth/widgets/guest_redirect_dialog.dart';
 import 'map_webview_screen.dart';
 import 'widgets/counselor_list_sheet.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key});
+
+  bool _checkGuestRedirect(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user != null) {
+      final isGuest = user.email == 'guest@riseup.com' || user.email.isEmpty || user.name == 'Tamu RiseUp';
+      if (isGuest) {
+        GuestRedirectDialog.show(context);
+        return true;
+      }
+    }
+    return false;
+  }
 
   void _launchMaps(BuildContext context) {
     Navigator.of(context).push(
@@ -168,6 +183,7 @@ class ResultScreen extends StatelessWidget {
                         height: 48,
                         child: ElevatedButton.icon(
                           onPressed: () {
+                            if (_checkGuestRedirect(context)) return;
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
@@ -193,7 +209,10 @@ class ResultScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 48,
                         child: OutlinedButton.icon(
-                          onPressed: () => _launchMaps(context),
+                          onPressed: () {
+                            if (_checkGuestRedirect(context)) return;
+                            _launchMaps(context);
+                          },
                           icon: const Icon(Icons.map_rounded, color: Colors.redAccent, size: 18),
                           label: const Text(
                             'Cari Psikolog / Psikiater Terdekat',
@@ -261,6 +280,7 @@ class ResultScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    if (_checkGuestRedirect(context)) return;
                     Navigator.of(context).pop(); // Kembali ke Dashboard
                   },
                   style: ElevatedButton.styleFrom(

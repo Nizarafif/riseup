@@ -9,6 +9,7 @@ import '../../../widgets/mood_theme_helper.dart';
 import '../../../providers/diagnostic_provider.dart';
 import 'breathing_modal.dart';
 import 'health_banner_carousel.dart';
+import '../../auth/widgets/guest_redirect_dialog.dart';
 
 const List<String> mentalHealthQuotes = [
   'Kesehatan mentalmu adalah prioritas. Menyadari gejala lebih awal adalah langkah bijak.',
@@ -50,8 +51,17 @@ class _HomeTabState extends State<HomeTab> {
   void _submitMood() async {
     if (_selectedMoodLevel == 0) return;
 
-    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
     if (user == null) return;
+
+    final diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+    final isGuest = user.email == 'guest@riseup.com' || user.email.isEmpty || user.name == 'Tamu RiseUp';
+    final hasDiagnosis = diagnosticProvider.historyList.isNotEmpty || diagnosticProvider.latestDiagnosis != null;
+    if (isGuest && hasDiagnosis) {
+      GuestRedirectDialog.show(context);
+      return;
+    }
 
     final success = await Provider.of<MoodProvider>(
       context,
@@ -356,7 +366,20 @@ class _HomeTabState extends State<HomeTab> {
         : const Color(0xFF6C63FF).withOpacity(0.15);
 
     return InkWell(
-      onTap: _showBreathingGuide,
+      onTap: () {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.user;
+        if (user != null) {
+          final diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+          final isGuest = user.email == 'guest@riseup.com' || user.email.isEmpty || user.name == 'Tamu RiseUp';
+          final hasDiagnosis = diagnosticProvider.historyList.isNotEmpty || diagnosticProvider.latestDiagnosis != null;
+          if (isGuest && hasDiagnosis) {
+            GuestRedirectDialog.show(context);
+            return;
+          }
+        }
+        _showBreathingGuide();
+      },
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(20),

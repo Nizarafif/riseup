@@ -8,6 +8,8 @@ import 'register_screen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  static bool autoPushRegister = false;
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -25,6 +27,14 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _loadRememberMe();
+    if (LoginScreen.autoPushRegister) {
+      LoginScreen.autoPushRegister = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RegisterScreen()),
+        );
+      });
+    }
   }
 
   void _loadRememberMe() async {
@@ -52,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final success = await authProvider.signIn(
       _emailController.text,
@@ -158,19 +168,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-
-
   void _showForgotPasswordDialog() {
     final resetEmailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool isLoading = false;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
-    
+
     final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
     final primaryTextColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
     final secondaryTextColor = isDarkBg ? const Color(0xFF9E9EAF) : Colors.grey;
-    final accentColor = isDarkBg ? const Color(0xFFA5B4FC) : const Color(0xFF6C63FF);
+    final accentColor = isDarkBg
+        ? const Color(0xFFA5B4FC)
+        : const Color(0xFF6C63FF);
 
     showDialog(
       context: context,
@@ -180,12 +190,21 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: dialogBgColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               title: Row(
                 children: [
                   Icon(Icons.lock_reset_rounded, color: accentColor),
                   const SizedBox(width: 10),
-                  Text('Reset Kata Sandi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryTextColor)),
+                  Text(
+                    'Reset Kata Sandi',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryTextColor,
+                    ),
+                  ),
                 ],
               ),
               content: Form(
@@ -206,16 +225,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: 'Email',
                         labelStyle: TextStyle(color: secondaryTextColor),
-                        prefixIcon: Icon(Icons.email_outlined, color: accentColor, size: 20),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: accentColor,
+                          size: 20,
+                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: isDarkBg ? Colors.white24 : Colors.black12),
+                          borderSide: BorderSide(
+                            color: isDarkBg ? Colors.white24 : Colors.black12,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(color: accentColor, width: 2),
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       validator: (val) {
                         if (val == null || val.isEmpty) {
@@ -239,18 +266,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accentColor,
                     foregroundColor: isDarkBg ? Colors.black : Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onPressed: isLoading
                       ? null
                       : () async {
                           if (!formKey.currentState!.validate()) return;
-                          
+
                           setDialogState(() {
                             isLoading = true;
                           });
 
-                          final success = await authProvider.sendPasswordResetEmail(resetEmailController.text);
+                          final success = await authProvider
+                              .sendPasswordResetEmail(
+                                resetEmailController.text,
+                              );
 
                           if (!mounted) return;
 
@@ -263,16 +295,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Link reset kata sandi telah dikirim ke ${resetEmailController.text}!'),
+                                content: Text(
+                                  'Link reset kata sandi telah dikirim ke ${resetEmailController.text}!',
+                                ),
                                 backgroundColor: const Color(0xFF00C9A7),
                               ),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(authProvider.errorMessage.isNotEmpty 
-                                    ? authProvider.errorMessage 
-                                    : 'Gagal mengirim link reset kata sandi.'),
+                                content: Text(
+                                  authProvider.errorMessage.isNotEmpty
+                                      ? authProvider.errorMessage
+                                      : 'Gagal mengirim link reset kata sandi.',
+                                ),
                                 backgroundColor: Colors.redAccent,
                               ),
                             );
@@ -282,9 +318,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? SizedBox(
                           height: 16,
                           width: 16,
-                          child: CircularProgressIndicator(color: isDarkBg ? Colors.black : Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: isDarkBg ? Colors.black : Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : Text('Kirim Link', style: TextStyle(color: isDarkBg ? Colors.black : Colors.white, fontWeight: FontWeight.bold)),
+                      : Text(
+                          'Kirim Link',
+                          style: TextStyle(
+                            color: isDarkBg ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             );
@@ -298,29 +343,41 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
-    
+
     // Theme colors
     final primaryTextColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
-    final secondaryTextColor = isDarkBg ? const Color(0xFF9E9EAF) : const Color(0xFF707070);
-    final cardBgColor = isDarkBg ? const Color(0xFF1E1E38).withOpacity(0.85) : Colors.white.withOpacity(0.90);
-    final cardBorderColor = isDarkBg ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.85);
-    final accentColor = isDarkBg ? const Color(0xFFA5B4FC) : const Color(0xFF6C63FF);
+    final secondaryTextColor = isDarkBg
+        ? const Color(0xFF9E9EAF)
+        : const Color(0xFF707070);
+    final cardBgColor = isDarkBg
+        ? const Color(0xFF1E1E38).withOpacity(0.85)
+        : Colors.white.withOpacity(0.90);
+    final cardBorderColor = isDarkBg
+        ? Colors.white.withOpacity(0.08)
+        : Colors.white.withOpacity(0.85);
+    final accentColor = isDarkBg
+        ? const Color(0xFFA5B4FC)
+        : const Color(0xFF6C63FF);
     final fieldBorderColor = isDarkBg ? Colors.white24 : Colors.black12;
-    final inputStyle = TextStyle(color: isDarkBg ? Colors.white : Colors.black87);
-    
+    final inputStyle = TextStyle(
+      color: isDarkBg ? Colors.white : Colors.black87,
+    );
+
     return Scaffold(
       body: DoodleBackground(
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-
                     Text(
                       'RiseUp',
                       textAlign: TextAlign.center,
@@ -345,7 +402,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     // Translucent Form Card (Chubby & Cute)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 26,
+                        vertical: 32,
+                      ),
                       decoration: BoxDecoration(
                         color: cardBgColor,
                         borderRadius: BorderRadius.circular(38),
@@ -385,26 +445,49 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: 'Email',
                               hintText: 'nama@email.com',
-                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
-                              hintStyle: TextStyle(color: isDarkBg ? Colors.white30 : Colors.black38),
-                              prefixIcon: Icon(Icons.email_outlined, color: accentColor, size: 20),
+                              labelStyle: TextStyle(
+                                fontSize: 13,
+                                color: secondaryTextColor,
+                              ),
+                              hintStyle: TextStyle(
+                                color: isDarkBg
+                                    ? Colors.white30
+                                    : Colors.black38,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: accentColor,
+                                size: 20,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: accentColor, width: 1.8),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 1.8,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
+                                borderSide: BorderSide(
+                                  color: fieldBorderColor,
+                                  width: 1.5,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: accentColor, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 2.0,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                  return 'Email tidak boleh kosong';
+                                return 'Email tidak boleh kosong';
                               }
                               if (!value.contains('@')) {
                                 return 'Format email tidak valid';
@@ -421,36 +504,64 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: inputStyle,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              labelStyle: TextStyle(fontSize: 13, color: secondaryTextColor),
-                              prefixIcon: Icon(Icons.lock_outline_rounded, color: accentColor, size: 20),
-                              suffixIconConstraints: const BoxConstraints(minWidth: 52, minHeight: 52),
+                              labelStyle: TextStyle(
+                                fontSize: 13,
+                                color: secondaryTextColor,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock_outline_rounded,
+                                color: accentColor,
+                                size: 20,
+                              ),
+                              suffixIconConstraints: const BoxConstraints(
+                                minWidth: 52,
+                                minHeight: 52,
+                              ),
                               suffixIcon: Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: IconButton(
                                   icon: Icon(
-                                    _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    _obscureText
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
                                     color: accentColor,
                                     size: 22,
                                   ),
-                                  tooltip: _obscureText ? 'Tampilkan password' : 'Sembunyikan password',
+                                  tooltip: _obscureText
+                                      ? 'Tampilkan password'
+                                      : 'Sembunyikan password',
                                   onPressed: () {
-                                    setState(() => _obscureText = !_obscureText);
+                                    setState(
+                                      () => _obscureText = !_obscureText,
+                                    );
                                   },
                                 ),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: accentColor, width: 1.8),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 1.8,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: fieldBorderColor, width: 1.5),
+                                borderSide: BorderSide(
+                                  color: fieldBorderColor,
+                                  width: 1.5,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
-                                borderSide: BorderSide(color: accentColor, width: 2.0),
+                                borderSide: BorderSide(
+                                  color: accentColor,
+                                  width: 2.0,
+                                ),
                               ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -471,8 +582,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                     child: Checkbox(
                                       value: _rememberMe,
                                       activeColor: accentColor,
-                                      checkColor: isDarkBg ? Colors.black : Colors.white,
-                                      side: BorderSide(color: isDarkBg ? Colors.white54 : Colors.black45),
+                                      checkColor: isDarkBg
+                                          ? Colors.black
+                                          : Colors.white,
+                                      side: BorderSide(
+                                        color: isDarkBg
+                                            ? Colors.white54
+                                            : Colors.black45,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(5),
                                       ),
@@ -498,7 +615,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: _showForgotPasswordDialog,
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
                                   'Lupa kata sandi?',
@@ -518,42 +636,87 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: double.infinity,
                             height: 54,
                             child: ElevatedButton(
-                              onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading ? null : _submit,
+                              onPressed:
+                                  authProvider.status ==
+                                          AuthStatus.authenticating ||
+                                      _isSocialLoading
+                                  ? null
+                                  : _submit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: accentColor,
-                                foregroundColor: isDarkBg ? Colors.black : Colors.white,
+                                foregroundColor: isDarkBg
+                                    ? Colors.black
+                                    : Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(22),
                                 ),
                                 elevation: 0,
                               ),
-                              child: authProvider.status == AuthStatus.authenticating
+                              child:
+                                  authProvider.status ==
+                                      AuthStatus.authenticating
                                   ? SizedBox(
                                       height: 20,
                                       width: 20,
-                                      child: CircularProgressIndicator(color: isDarkBg ? Colors.black : Colors.white, strokeWidth: 2.5),
+                                      child: CircularProgressIndicator(
+                                        color: isDarkBg
+                                            ? Colors.black
+                                            : Colors.white,
+                                        strokeWidth: 2.5,
+                                      ),
                                     )
                                   : Text(
                                       'Masuk',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: isDarkBg ? Colors.black : Colors.white),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkBg
+                                            ? Colors.black
+                                            : Colors.white,
+                                      ),
                                     ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Custom Divider
                           Row(
                             children: [
-                              Expanded(child: Divider(color: isDarkBg ? Colors.white12 : Colors.black12, thickness: 1)),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text('atau login dengan', style: TextStyle(color: isDarkBg ? Colors.white38 : Colors.black38, fontSize: 11, fontWeight: FontWeight.w500)),
+                              Expanded(
+                                child: Divider(
+                                  color: isDarkBg
+                                      ? Colors.white12
+                                      : Colors.black12,
+                                  thickness: 1,
+                                ),
                               ),
-                              Expanded(child: Divider(color: isDarkBg ? Colors.white12 : Colors.black12, thickness: 1)),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                child: Text(
+                                  'atau login dengan',
+                                  style: TextStyle(
+                                    color: isDarkBg
+                                        ? Colors.white38
+                                        : Colors.black38,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: isDarkBg
+                                      ? Colors.white12
+                                      : Colors.black12,
+                                  thickness: 1,
+                                ),
+                              ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
 
                           // Social Media Sign-In buttons (Chubby)
@@ -564,33 +727,55 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: SizedBox(
                                   height: 50,
                                   child: OutlinedButton(
-                                    onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
+                                    onPressed:
+                                        authProvider.status ==
+                                                AuthStatus.authenticating ||
+                                            _isSocialLoading
                                         ? null
                                         : () => _socialLogin('Google'),
                                     style: OutlinedButton.styleFrom(
-                                      side: BorderSide(color: isDarkBg ? Colors.white24 : Colors.black12, width: 1.5),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      side: BorderSide(
+                                        color: isDarkBg
+                                            ? Colors.white24
+                                            : Colors.black12,
+                                        width: 1.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
                                       padding: EdgeInsets.zero,
                                     ),
-                                    child: (_isSocialLoading && _socialPlatform == 'Google')
+                                    child:
+                                        (_isSocialLoading &&
+                                            _socialPlatform == 'Google')
                                         ? const SizedBox(
                                             height: 16,
                                             width: 16,
-                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
                                           )
                                         : Row(
-                                             mainAxisAlignment: MainAxisAlignment.center,
-                                             children: [
-                                               Image.asset(
-                                                 'assets/images/google.png',
-                                                 height: 20,
-                                                 width: 20,
-                                                 fit: BoxFit.contain,
-                                               ),
-                                               const SizedBox(width: 8),
-                                               Text('Google', style: TextStyle(color: primaryTextColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                                             ],
-                                           ),
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                'assets/images/google.png',
+                                                height: 20,
+                                                width: 20,
+                                                fit: BoxFit.contain,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Google',
+                                                style: TextStyle(
+                                                  color: primaryTextColor,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                   ),
                                 ),
                               ),
@@ -600,20 +785,44 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: SizedBox(
                                   height: 50,
                                   child: OutlinedButton(
-                                    onPressed: authProvider.status == AuthStatus.authenticating || _isSocialLoading
+                                    onPressed:
+                                        authProvider.status ==
+                                                AuthStatus.authenticating ||
+                                            _isSocialLoading
                                         ? null
                                         : _signInAnonymously,
                                     style: OutlinedButton.styleFrom(
-                                      side: BorderSide(color: isDarkBg ? Colors.white24 : Colors.black12, width: 1.5),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      side: BorderSide(
+                                        color: isDarkBg
+                                            ? Colors.white24
+                                            : Colors.black12,
+                                        width: 1.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
                                       padding: EdgeInsets.zero,
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.account_circle_outlined, color: isDarkBg ? const Color(0xFFA5B4FC) : Colors.blueAccent, size: 20),
+                                        Icon(
+                                          Icons.account_circle_outlined,
+                                          color: isDarkBg
+                                              ? const Color(0xFFA5B4FC)
+                                              : Colors.blueAccent,
+                                          size: 20,
+                                        ),
                                         const SizedBox(width: 6),
-                                        Text('Masuk Tamu', style: TextStyle(color: primaryTextColor, fontSize: 13, fontWeight: FontWeight.bold)),
+                                        Text(
+                                          'Masuk Tamu',
+                                          style: TextStyle(
+                                            color: primaryTextColor,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -632,12 +841,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Text(
                           'Belum punya akun? ',
-                          style: TextStyle(color: secondaryTextColor, fontSize: 13),
+                          style: TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 13,
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
                             );
                           },
                           child: Text(
@@ -660,5 +874,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
 }

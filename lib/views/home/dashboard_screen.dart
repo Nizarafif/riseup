@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/diagnostic_provider.dart';
 import '../../providers/mood_provider.dart';
 import '../auth/login_screen.dart';
+import '../auth/widgets/guest_redirect_dialog.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../screening/screening_screen.dart';
 import '../monitoring/monitoring_screen.dart';
@@ -105,6 +107,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isMenuOpen = false;
   DateTime? _lastPressedAt;
   late DiagnosticProvider _diagnosticProvider;
+
+  bool _checkGuestRedirect() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user != null) {
+      final isGuest = user.email == 'guest@riseup.com' || user.email.isEmpty || user.name == 'Tamu RiseUp';
+      final hasDiagnosis = _diagnosticProvider.historyList.isNotEmpty || _diagnosticProvider.latestDiagnosis != null;
+      if (isGuest && hasDiagnosis) {
+        GuestRedirectDialog.show(context);
+        return true;
+      }
+    }
+    return false;
+  }
 
   Future<bool> _onWillPop() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -467,6 +483,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           backgroundColor: Colors.transparent,
           extendBody: true,
           appBar: AppBar(
+            systemOverlayStyle: SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: isDarkBg ? Brightness.light : Brightness.dark,
+              statusBarBrightness: isDarkBg ? Brightness.dark : Brightness.light,
+              systemNavigationBarColor: Colors.transparent,
+              systemNavigationBarIconBrightness: isDarkBg ? Brightness.light : Brightness.dark,
+            ),
             backgroundColor: isDarkBg
                 ? Colors.transparent
                 : Colors.white.withOpacity(0.9),
@@ -526,6 +549,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.purple,
                 onTap: () {
                   setState(() => _isMenuOpen = false);
+                  if (_checkGuestRedirect()) return;
                   _showBreathingGuide();
                 },
                 isOpen: _isMenuOpen,
@@ -540,6 +564,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.indigo,
                 onTap: () {
                   setState(() => _isMenuOpen = false);
+                  if (_checkGuestRedirect()) return;
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const MapWebviewScreen(
@@ -561,6 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFF00C9A7),
                 onTap: () {
                   setState(() => _isMenuOpen = false);
+                  if (_checkGuestRedirect()) return;
                   _showBookReader();
                 },
                 isOpen: _isMenuOpen,
@@ -575,6 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFFEC4899),
                 onTap: () {
                   setState(() => _isMenuOpen = false);
+                  if (_checkGuestRedirect()) return;
                   _showAmbientMusicSheet();
                 },
                 isOpen: _isMenuOpen,
@@ -679,6 +706,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final unselectedColor = isDarkBg ? Colors.white38 : const Color(0xFF8E8E93);
     return GestureDetector(
       onTap: () {
+        if (index == 2 || index == 3) {
+          if (_checkGuestRedirect()) return;
+        }
         setState(() {
           _currentIndex = index;
         });

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' as io;
+import 'dart:convert';
 import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../onboarding/palette_setup_screen.dart';
@@ -12,7 +13,28 @@ class SettingsTab extends StatelessWidget {
   final UserModel user;
   const SettingsTab({super.key, required this.user});
 
+  bool _hasValidPhoto(String path) {
+    if (path.isEmpty) return false;
+    if (path.startsWith('data:image/') && path.contains(';base64,')) {
+      return true;
+    }
+    if (path.startsWith('http://') ||
+        path.startsWith('https://') ||
+        path.startsWith('blob:')) {
+      return true;
+    }
+    if (kIsWeb) {
+      return true;
+    } else {
+      return io.File(path).existsSync();
+    }
+  }
+
   ImageProvider _getImageProvider(String path) {
+    if (path.startsWith('data:image/') && path.contains(';base64,')) {
+      final base64String = path.split(';base64,').last;
+      return MemoryImage(base64.decode(base64String));
+    }
     if (path.startsWith('http://') ||
         path.startsWith('https://') ||
         path.startsWith('blob:')) {
@@ -222,12 +244,12 @@ class SettingsTab extends StatelessWidget {
                                   : const Color(0xFFF8F9FD),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: photoUrlController.text.trim().isNotEmpty
+                                color: _hasValidPhoto(photoUrlController.text.trim())
                                     ? const Color(0xFF6C63FF)
                                     : Colors.transparent,
                                 width: 2,
                               ),
-                              image: photoUrlController.text.trim().isNotEmpty
+                              image: _hasValidPhoto(photoUrlController.text.trim())
                                   ? DecorationImage(
                                       image: _getImageProvider(
                                         photoUrlController.text.trim(),
@@ -236,7 +258,7 @@ class SettingsTab extends StatelessWidget {
                                     )
                                   : null,
                             ),
-                            child: photoUrlController.text.trim().isEmpty
+                            child: !_hasValidPhoto(photoUrlController.text.trim())
                                 ? Icon(
                                     Icons.no_photography_outlined,
                                     color: textColor.withOpacity(0.4),
@@ -254,12 +276,21 @@ class SettingsTab extends StatelessWidget {
                                     final ImagePicker picker = ImagePicker();
                                     final XFile? image = await picker.pickImage(
                                       source: ImageSource.gallery,
-                                      imageQuality: 85,
+                                      imageQuality: 40,
+                                      maxWidth: 250,
+                                      maxHeight: 250,
                                     );
                                     if (image != null) {
-                                      setModalState(() {
-                                        photoUrlController.text = image.path;
-                                      });
+                                      try {
+                                        final bytes = await image.readAsBytes();
+                                        final base64Str = base64Encode(bytes);
+                                        final format = image.path.endsWith('.png') ? 'png' : 'jpeg';
+                                        setModalState(() {
+                                          photoUrlController.text = 'data:image/$format;base64,$base64Str';
+                                        });
+                                      } catch (e) {
+                                        debugPrint('Gagal mengonversi gambar ke base64: $e');
+                                      }
                                     }
                                   },
                                   icon: const Icon(
@@ -748,7 +779,7 @@ class SettingsTab extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  user.photoUrl.isNotEmpty
+                  _hasValidPhoto(user.photoUrl)
                       ? Container(
                           width: 72,
                           height: 72,
