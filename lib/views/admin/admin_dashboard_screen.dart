@@ -187,20 +187,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () => _showLogoutConfirmationDialog(context),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.redAccent.withOpacity(0.08),
-              shape: BoxShape.circle,
+        Row(
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                authProvider.setAdminViewingAsUser(true);
+              },
+              icon: const Icon(Icons.remove_red_eye_rounded, size: 14, color: Colors.white),
+              label: const Text(
+                'Mode User',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6C63FF),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
             ),
-            child: const Icon(
-              Icons.power_settings_new_rounded,
-              color: Colors.redAccent,
-              size: 20,
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _showLogoutConfirmationDialog(context),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.power_settings_new_rounded,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );
@@ -265,13 +288,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required IconData icon,
     required Color iconColor,
     required Widget destination,
+    VoidCallback? onTap,
   }) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
+        onTap: onTap ?? () {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -414,6 +438,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: Icons.menu_book_rounded,
                 iconColor: const Color(0xFF0284C7),
                 destination: const BooksManager(),
+              ),
+              const SizedBox(height: 12),
+              _buildMenuCard(
+                context,
+                title: 'Tampilan Dashboard Pengguna',
+                subtitle: 'Akses dan uji coba seluruh fitur aplikasi sebagai pengguna',
+                icon: Icons.remove_red_eye_rounded,
+                iconColor: const Color(0xFF00C9A7),
+                destination: Container(),
+                onTap: () {
+                  Provider.of<AuthProvider>(context, listen: false).setAdminViewingAsUser(true);
+                },
               ),
               const SizedBox(height: 40),
             ],

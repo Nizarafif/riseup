@@ -24,7 +24,11 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   static void startScreeningTest(BuildContext context, DiagnosticProvider diagnosticProvider) {
-    if (diagnosticProvider.hasTestedToday) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    final isAdmin = user?.role == 'admin';
+
+    if (diagnosticProvider.hasTestedToday && !isAdmin) {
       showDialog(
         context: context,
         builder: (context) {
@@ -448,7 +452,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (user == null) return const LoginScreen();
 
-    if (user.role == 'admin') {
+    if (user.role == 'admin' && !authProvider.isAdminViewingAsUser) {
       return WillPopScope(
         onWillPop: _onWillPop,
         child: const AdminDashboardScreen(),
@@ -523,6 +527,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
+            actions: [
+              if (user.role == 'admin')
+                Container(
+                  margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      authProvider.setAdminViewingAsUser(false);
+                    },
+                    icon: const Icon(Icons.admin_panel_settings_rounded, size: 16, color: Colors.white),
+                    label: const Text(
+                      'Panel Admin',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6C63FF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                ),
+            ],
           ),
           body: Stack(
             children: [

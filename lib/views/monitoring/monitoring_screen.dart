@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/diagnostic_provider.dart';
 import '../../widgets/mood_theme_helper.dart';
+import '../../models/mood_model.dart';
 
 class MonitoringScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -288,8 +289,18 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
       );
     }
 
-    // Convert moods to FlSpot data
-    final spots = moods.asMap().entries.map((entry) {
+    // Group moods by unique date (yyyy-MM-dd) and keep only the latest entry per day
+    final Map<String, MoodModel> uniqueDayMoods = {};
+    for (final mood in moods) {
+      final dateKey = DateFormat('yyyy-MM-dd').format(mood.tanggal);
+      uniqueDayMoods[dateKey] = mood;
+    }
+
+    final displayMoods = uniqueDayMoods.values.toList()
+      ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
+
+    // Convert displayMoods to FlSpot data
+    final spots = displayMoods.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.moodLevel.toDouble());
     }).toList();
 
@@ -358,11 +369,27 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         int idx = value.toInt();
-                        if (idx >= 0 && idx < moods.length) {
+                        if (idx >= 0 && idx < displayMoods.length) {
+                          // Prevent title overlapping by checking length
+                          bool showLabel = false;
+                          if (displayMoods.length <= 7) {
+                            showLabel = true;
+                          } else if (displayMoods.length <= 14) {
+                            showLabel = idx % 2 == 0;
+                          } else if (displayMoods.length <= 21) {
+                            showLabel = idx % 3 == 0;
+                          } else {
+                            showLabel = idx % 5 == 0;
+                          }
+
+                          if (!showLabel) {
+                            return const SizedBox.shrink();
+                          }
+
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
-                              DateFormat('dd/MM').format(moods[idx].tanggal),
+                              DateFormat('dd/MM').format(displayMoods[idx].tanggal),
                               style: TextStyle(
                                 fontSize: 9, 
                                 color: isDarkBg ? Colors.white54 : Colors.grey, 
@@ -400,7 +427,7 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
-                maxX: moods.length > 1 ? (moods.length - 1).toDouble() : 1.0,
+                maxX: displayMoods.length > 1 ? (displayMoods.length - 1).toDouble() : 1.0,
                 minY: 1,
                 maxY: 5,
                 lineBarsData: [
@@ -444,7 +471,7 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: moods.length > 5 ? 5 : moods.length,
+            itemCount: moods.length > 30 ? 30 : moods.length,
             itemBuilder: (context, index) {
               // Show latest first
               final mood = moods[moods.length - 1 - index];

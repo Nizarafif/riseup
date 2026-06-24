@@ -27,6 +27,7 @@ class AuthProvider extends ChangeNotifier {
   int _selectedPaletteIndex = 0;
   int _selectedEmojiThemeIndex = 0;
   int _selectedBackgroundThemeIndex = 0;
+  bool _isAdminViewingAsUser = false;
 
   AuthStatus get status => _status;
   UserModel? get user => _user;
@@ -45,6 +46,12 @@ class AuthProvider extends ChangeNotifier {
   int get selectedPaletteIndex => _selectedPaletteIndex;
   int get selectedEmojiThemeIndex => _selectedEmojiThemeIndex;
   int get selectedBackgroundThemeIndex => _selectedBackgroundThemeIndex;
+  bool get isAdminViewingAsUser => _isAdminViewingAsUser;
+
+  void setAdminViewingAsUser(bool value) {
+    _isAdminViewingAsUser = value;
+    notifyListeners();
+  }
 
   void completeOnboarding() {
     _onboardingCompleted = true;

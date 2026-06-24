@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import 'dart:async';
+import 'package:intl/intl.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/mood_provider.dart';
 import '../../../models/user_model.dart';
@@ -35,6 +37,10 @@ class _HomeTabState extends State<HomeTab> {
   final _noteController = TextEditingController();
   bool _moodLoggedToday = false;
   late String _currentQuote;
+  DateTime _selectedMoodDate = DateTime.now();
+  bool _isAnimatingSimulation = false;
+  int _visibleSimulationDays = 0;
+  Timer? _simulationTimer;
 
   @override
   void initState() {
@@ -45,6 +51,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   void dispose() {
     _noteController.dispose();
+    _simulationTimer?.cancel();
     super.dispose();
   }
 
@@ -63,20 +70,108 @@ class _HomeTabState extends State<HomeTab> {
       return;
     }
 
+    final isAdmin = user.role == 'admin';
     final success = await Provider.of<MoodProvider>(
       context,
       listen: false,
-    ).addMood(user.uid, _selectedMoodLevel, _noteController.text);
+    ).addMood(
+      user.uid,
+      _selectedMoodLevel,
+      _noteController.text,
+      date: isAdmin ? _selectedMoodDate : null,
+    );
 
     if (success && mounted) {
       setState(() {
-        _moodLoggedToday = true;
+        if (!isAdmin) {
+          _moodLoggedToday = true;
+        }
         _noteController.clear();
+        _selectedMoodLevel = 0;
+        _selectedMoodDate = DateTime.now(); // reset date
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Mood harian berhasil dicatat!'),
           backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  void _simulate30DaysMood() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+    if (user == null) return;
+
+    setState(() {
+      _selectedMoodLevel = 0; // reset
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Menyiapkan data simulasi mood 30 hari...')),
+    );
+
+    final random = math.Random();
+    
+    final sampleNotes = [
+      'Hari yang menyenangkan!',
+      'Sedikit lelah setelah aktivitas harian.',
+      'Sangat produktif hari ini.',
+      'Olahraga sore sangat membantu rileks.',
+      'Kualitas tidur cukup baik malam tadi.',
+      'Menghabiskan waktu membaca buku penenang.',
+      'Biasa saja hari ini, tidak ada yang spesial.',
+      'Merasa sangat berenergi dan bahagia.',
+    ];
+
+    final now = DateTime.now();
+    final totalDays = DateTime(now.year, now.month + 1, 0).day;
+    final List<Map<String, dynamic>> moodDataList = [];
+    
+    for (int day = 1; day <= totalDays; day++) {
+      final date = DateTime(now.year, now.month, day, 12, 0);
+      final level = random.nextInt(5) + 1;
+      final note = sampleNotes[random.nextInt(sampleNotes.length)];
+      
+      moodDataList.add({
+        'date': date,
+        'level': level,
+        'note': note,
+      });
+    }
+
+    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+    final success = await moodProvider.addMoodsBatch(user.uid, moodDataList);
+
+    if (success) {
+      setState(() {
+        _isAnimatingSimulation = true;
+        _visibleSimulationDays = 0;
+      });
+      _simulationTimer?.cancel();
+      _simulationTimer = Timer.periodic(const Duration(milliseconds: 120), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          _visibleSimulationDays++;
+          if (_visibleSimulationDays >= totalDays) {
+            timer.cancel();
+            _isAnimatingSimulation = false;
+          }
+        });
+      });
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success 
+              ? 'Simulasi data mood 30 hari berhasil dimuat!' 
+              : 'Gagal memuat data mood simulasi.'),
+          backgroundColor: success ? Colors.green : Colors.redAccent,
         ),
       );
     }
@@ -212,7 +307,8 @@ class _HomeTabState extends State<HomeTab> {
         ? Colors.white10
         : const Color(0xFF6C63FF).withOpacity(0.03);
     final moodProvider = Provider.of<MoodProvider>(context);
-    final isMoodLogged = _moodLoggedToday || moodProvider.hasLoggedMoodToday;
+    final isAdmin = widget.user.role == 'admin';
+    final isMoodLogged = (_moodLoggedToday || moodProvider.hasLoggedMoodToday) && !isAdmin;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -330,6 +426,60 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                   ),
+                  if (isAdmin) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Tanggal Entri: ${DateFormat('dd MMMM yyyy').format(_selectedMoodDate)}',
+                          style: TextStyle(color: subtitleColor, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _selectedMoodDate,
+                              firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                              lastDate: DateTime.now().add(const Duration(days: 31)),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: isDarkBg
+                                      ? ThemeData.dark().copyWith(
+                                          colorScheme: const ColorScheme.dark(
+                                            primary: Color(0xFF6C63FF),
+                                            onPrimary: Colors.white,
+                                            surface: Color(0xFF1E1E38),
+                                            onSurface: Colors.white,
+                                          ),
+                                          dialogBackgroundColor: const Color(0xFF1E1E38),
+                                        )
+                                      : ThemeData.light().copyWith(
+                                          colorScheme: ColorScheme.light(
+                                            primary: const Color(0xFF6C63FF),
+                                            onPrimary: Colors.white,
+                                            onSurface: textColor,
+                                          ),
+                                        ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _selectedMoodDate = picked;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF6C63FF)),
+                          label: const Text(
+                            'Ubah Tanggal',
+                            style: TextStyle(color: Color(0xFF6C63FF), fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
@@ -350,6 +500,28 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                   ),
+                  if (isAdmin) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _simulate30DaysMood,
+                        icon: const Icon(Icons.bolt_rounded, size: 16, color: Colors.amber),
+                        label: const Text(
+                          'Simulasikan Mood 30 Hari',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.amber[800],
+                          side: const BorderSide(color: Colors.amber, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),
@@ -587,7 +759,13 @@ class _HomeTabState extends State<HomeTab> {
     for (final mood in moods) {
       final date = mood.tanggal;
       if (date.year == year && date.month == month) {
-        moodMap[date.day] = mood;
+        if (_isAnimatingSimulation) {
+          if (date.day <= _visibleSimulationDays) {
+            moodMap[date.day] = mood;
+          }
+        } else {
+          moodMap[date.day] = mood;
+        }
       }
     }
 
@@ -692,12 +870,12 @@ class _HomeTabState extends State<HomeTab> {
                     border: border,
                   ),
                   child: hasMood
-                      ? MoodEmojiWidget(
-                          level: moodMap[day]!.moodLevel,
+                      ? ShiftingMoodEmojiWidget(
+                          targetLevel: moodMap[day]!.moodLevel,
                           size: 34,
                           paletteIndex: paletteIdx,
                           emojiThemeIndex: emojiThemeIdx,
-                          isSelected: false,
+                          shouldShift: _isAnimatingSimulation && day == _visibleSimulationDays,
                         )
                       : Text(
                           '$day',
@@ -765,6 +943,89 @@ class _HomeTabState extends State<HomeTab> {
           _buildBreathingCard(isDarkBg),
         ],
       ),
+    );
+  }
+}
+
+class ShiftingMoodEmojiWidget extends StatefulWidget {
+  final int targetLevel;
+  final double size;
+  final int paletteIndex;
+  final int emojiThemeIndex;
+  final bool shouldShift;
+
+  const ShiftingMoodEmojiWidget({
+    super.key,
+    required this.targetLevel,
+    required this.size,
+    required this.paletteIndex,
+    required this.emojiThemeIndex,
+    required this.shouldShift,
+  });
+
+  @override
+  State<ShiftingMoodEmojiWidget> createState() => _ShiftingMoodEmojiWidgetState();
+}
+
+class _ShiftingMoodEmojiWidgetState extends State<ShiftingMoodEmojiWidget> {
+  late int _currentLevel;
+  Timer? _timer;
+  bool _settled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentLevel = widget.shouldShift ? (math.Random().nextInt(5) + 1) : widget.targetLevel;
+    _settled = !widget.shouldShift;
+    
+    if (widget.shouldShift) {
+      int count = 0;
+      _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        count++;
+        if (count >= 5) {
+          timer.cancel();
+          setState(() {
+            _currentLevel = widget.targetLevel;
+            _settled = true;
+          });
+        } else {
+          setState(() {
+            _currentLevel = (math.Random().nextInt(5) + 1);
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('${widget.targetLevel}_${widget.shouldShift}_$_settled'),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: MoodEmojiWidget(
+            level: _currentLevel,
+            size: widget.size,
+            paletteIndex: widget.paletteIndex,
+            emojiThemeIndex: widget.emojiThemeIndex,
+            isSelected: false,
+          ),
+        );
+      },
     );
   }
 }

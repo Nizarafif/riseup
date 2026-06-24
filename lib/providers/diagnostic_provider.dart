@@ -8,6 +8,7 @@ import '../models/user_model.dart';
 import '../services/firestore_service.dart';
 import '../services/expert_system_service.dart';
 import '../services/auth_service.dart';
+import 'mood_provider.dart';
 import '../services/notification_service.dart';
 
 class DiagnosticProvider extends ChangeNotifier {
@@ -351,6 +352,25 @@ class DiagnosticProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Gagal menghapus pengguna: $e");
       rethrow;
+    }
+  }
+
+  // --- Clear Admin Test Data (Screening & Moods) ---
+  Future<bool> clearAdminTestData(String userId, MoodProvider moodProvider) async {
+    try {
+      await _dbService.clearUserTestData(userId);
+      await fetchHistory(userId);
+      await moodProvider.fetchMoods(userId);
+      
+      if (_usersSubscription == null) {
+        _allUsers = await _dbService.getAllUsers();
+        _allHistories = await _dbService.getAllHistory();
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Gagal mereset data uji coba admin: $e");
+      return false;
     }
   }
 

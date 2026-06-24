@@ -810,14 +810,20 @@ class StatsTrendsManager extends StatelessWidget {
     final users = diagnosticProvider.allUsers;
     final histories = diagnosticProvider.allHistories;
     
+    // Temukan set UID untuk semua admin
+    final adminUids = users.where((u) => u.role == 'admin').map((u) => u.uid).toSet();
+    
+    // Filter histories agar hanya berisi riwayat dari user non-admin
+    final nonAdminHistories = histories.where((h) => !adminUids.contains(h.userId)).toList();
+    
     // Hitung persentase tiap hasil diagnosis
     final Map<String, int> distribution = {};
-    for (var h in histories) {
+    for (var h in nonAdminHistories) {
       final key = h.hasilDiagnosis;
       distribution[key] = (distribution[key] ?? 0) + 1;
     }
 
-    final int totalTests = histories.length;
+    final int totalTests = nonAdminHistories.length;
 
     // Filter daftar pengguna role "user" saja agar tidak menampilkan admin
     final listUsers = users.where((u) => u.role != 'admin').toList();
@@ -961,7 +967,7 @@ class StatsTrendsManager extends StatelessWidget {
                     final u = listUsers[idx];
                     
                     // Temukan riwayat tes terbaru pengguna ini
-                    final userHistories = histories.where((h) => h.userId == u.uid).toList();
+                    final userHistories = nonAdminHistories.where((h) => h.userId == u.uid).toList();
                     String lastResult = 'Belum pernah tes';
                     Color resultColor = const Color(0xFF64748B);
                     

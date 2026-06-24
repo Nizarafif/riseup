@@ -867,6 +867,51 @@ class FirestoreService {
     }
   }
 
+  Future<void> addMoodsBatch(List<MoodModel> moods) async {
+    if (_useMock) {
+      for (final mood in moods) {
+        _mockMoods.add(MoodModel(
+          id: 'mock-m-${DateTime.now().millisecondsSinceEpoch}-${mood.tanggal.millisecondsSinceEpoch}',
+          userId: mood.userId,
+          tanggal: mood.tanggal,
+          moodLevel: mood.moodLevel,
+          catatan: mood.catatan,
+        ));
+      }
+    } else {
+      final batch = _db!.batch();
+      for (final mood in moods) {
+        final docRef = _db!.collection('mood_tracker').doc();
+        batch.set(docRef, mood.toMap());
+      }
+      await batch.commit();
+    }
+  }
+
+  Future<void> clearUserTestData(String userId) async {
+    if (_useMock) {
+      _mockHistory.removeWhere((h) => h.userId == userId);
+      _mockMoods.removeWhere((m) => m.userId == userId);
+      _updateMockHistoryStream();
+    } else {
+      // 1. Hapus riwayat tes
+      final historySnap = await _db!.collection('riwayat_tes').where('userId', isEqualTo: userId).get();
+      final historyBatch = _db!.batch();
+      for (final doc in historySnap.docs) {
+        historyBatch.delete(doc.reference);
+      }
+      await historyBatch.commit();
+
+      // 2. Hapus mood tracker
+      final moodSnap = await _db!.collection('mood_tracker').where('userId', isEqualTo: userId).get();
+      final moodBatch = _db!.batch();
+      for (final doc in moodSnap.docs) {
+        moodBatch.delete(doc.reference);
+      }
+      await moodBatch.commit();
+    }
+  }
+
   // --- Posters CRUD ---
   final List<String> _mockPosters = [
     'assets/poster/poster1.jpg',

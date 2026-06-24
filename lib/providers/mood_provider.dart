@@ -37,11 +37,11 @@ class MoodProvider extends ChangeNotifier {
   }
 
   // Menambahkan entri mood baru
-  Future<bool> addMood(String userId, int moodLevel, String catatan) async {
+  Future<bool> addMood(String userId, int moodLevel, String catatan, {DateTime? date}) async {
     final mood = MoodModel(
       id: '',
       userId: userId,
-      tanggal: DateTime.now(),
+      tanggal: date ?? DateTime.now(),
       moodLevel: moodLevel,
       catatan: catatan,
     );
@@ -56,6 +56,41 @@ class MoodProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint("Gagal menyimpan mood: $e");
+      return false;
+    }
+  }
+
+  // Menambahkan entri mood baru secara batch (simulasi)
+  Future<bool> addMoodsBatch(String userId, List<Map<String, dynamic>> moodDataList) async {
+    final List<MoodModel> moods = moodDataList.map((data) {
+      return MoodModel(
+        id: '',
+        userId: userId,
+        tanggal: data['date'] ?? DateTime.now(),
+        moodLevel: data['level'] ?? 3,
+        catatan: data['note'] ?? '',
+      );
+    }).toList();
+
+    try {
+      await _dbService.addMoodsBatch(moods);
+      await fetchMoods(userId); // Sinkronisasi sekali di akhir
+      await NotificationService().onMoodLogged(); // Reschedule sekali di akhir
+      return true;
+    } catch (e) {
+      debugPrint("Gagal menyimpan batch mood: $e");
+      return false;
+    }
+  }
+
+  // Menghapus/mereset semua entri mood user
+  Future<bool> clearMoods(String userId) async {
+    try {
+      await _dbService.clearUserTestData(userId);
+      await fetchMoods(userId); // Sinkronisasi ulang data lokal
+      return true;
+    } catch (e) {
+      debugPrint("Gagal mereset data mood: $e");
       return false;
     }
   }

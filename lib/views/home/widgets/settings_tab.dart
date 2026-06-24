@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io' as io;
 import 'dart:convert';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/diagnostic_provider.dart';
+import '../../../providers/mood_provider.dart';
 import '../../../models/user_model.dart';
 import '../../onboarding/palette_setup_screen.dart';
 import 'avatar_helper.dart';
@@ -45,6 +47,158 @@ class SettingsTab extends StatelessWidget {
     } else {
       return FileImage(io.File(path));
     }
+  }
+
+  void _showResetAdminTestDataDialog(BuildContext context, AuthProvider authProvider) {
+    final user = authProvider.user;
+    if (user == null) return;
+    final isDarkBg = authProvider.selectedBackgroundThemeIndex == 2;
+    final dialogBgColor = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+    final titleTextColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+    final subtitleTextColor = isDarkBg ? Colors.white70 : const Color(0xFF707070);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogCtx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Container(
+            decoration: BoxDecoration(
+              color: dialogBgColor,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: isDarkBg ? Colors.white10 : Colors.black.withOpacity(0.05),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkBg ? 0.4 : 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.redAccent,
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Reset Data Uji Coba?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: titleTextColor,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Aksi ini akan menghapus seluruh data skrining gejala dan mood tracker hasil uji coba yang pernah Anda lakukan. Data analitik lainnya tidak terpengaruh.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: subtitleTextColor,
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(dialogCtx),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: isDarkBg ? Colors.white12 : Colors.black12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: Text(
+                              'Batal',
+                              style: TextStyle(
+                                color: isDarkBg ? Colors.white70 : const Color(0xFF505050),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(dialogCtx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Mereset seluruh data uji coba admin...')),
+                              );
+                              
+                              final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+                              final diagnosticProvider = Provider.of<DiagnosticProvider>(context, listen: false);
+                              final success = await diagnosticProvider.clearAdminTestData(user.uid, moodProvider);
+                              
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(success 
+                                        ? 'Seluruh data uji coba admin berhasil direset!' 
+                                        : 'Gagal mereset data uji coba.'),
+                                    backgroundColor: success ? Colors.green : Colors.redAccent,
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Reset',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _selectReminderTime(
@@ -1006,6 +1160,33 @@ class SettingsTab extends StatelessWidget {
             onTap: () => _selectReminderTime(context, authProvider),
           ),
           const SizedBox(height: 28),
+
+          if (authProvider.user?.role == 'admin') ...[
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  _showResetAdminTestDataDialog(context, authProvider);
+                },
+                icon: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
+                label: const Text(
+                  'Reset Seluruh Data Uji Coba',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.redAccent,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           SizedBox(
             width: double.infinity,
