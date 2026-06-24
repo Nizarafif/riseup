@@ -8,6 +8,10 @@ import '../../providers/mood_provider.dart';
 import '../../providers/diagnostic_provider.dart';
 import '../../widgets/mood_theme_helper.dart';
 import '../../models/mood_model.dart';
+import '../music/ambient_music_sheet.dart';
+import '../home/widgets/breathing_modal.dart';
+import '../screening/map_webview_screen.dart';
+
 
 class MonitoringScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -549,6 +553,258 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
     );
   }
 
+  Widget _buildTrendAnalysisCard(BuildContext context, DiagnosticProvider diagnosticProvider, bool isDarkBg) {
+    final trend = diagnosticProvider.evaluate30DayScreeningTrend();
+    if (trend['status'] == 'no_data') return const SizedBox.shrink();
+
+    final cardBg = isDarkBg ? const Color(0xFF1E1E38) : Colors.white;
+    final titleColor = isDarkBg ? Colors.white : const Color(0xFF3F3D56);
+    final bodyColor = isDarkBg ? Colors.white70 : const Color(0xFF505050);
+    final borderColor = isDarkBg
+        ? Colors.white.withOpacity(0.1)
+        : const Color(0xFF6C63FF).withOpacity(0.05);
+
+    final Color statusColor = trend['color'] ?? Colors.grey;
+    final IconData statusIcon = trend['icon'] ?? Icons.info_outline;
+
+    final String status = trend['status'] ?? '';
+    final bool isBad = status == 'worsening' || status == 'stable_bad';
+    final bool isGood = status == 'stable_normal' || status == 'improving';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.01),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: borderColor, width: 1.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(statusIcon, color: statusColor, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trend['title'] ?? 'Tren Kondisi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Analisis Tren 30 Hari',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDarkBg ? Colors.white54 : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Pattern label
+          Row(
+            children: [
+              Text(
+                'Arah Perkembangan: ',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkBg ? Colors.white54 : Colors.black45,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  trend['pattern'] ?? '-',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            trend['message'] ?? '',
+            style: TextStyle(
+              fontSize: 13,
+              color: bodyColor,
+              height: 1.5,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (trend['actions'] != null && (trend['actions'] as List).isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Divider(color: isDarkBg ? Colors.white10 : Colors.black12, height: 1),
+            const SizedBox(height: 14),
+            Text(
+              'Rekomendasi Tindakan:',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: titleColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: (trend['actions'] as List<dynamic>).map((action) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, color: statusColor, size: 15),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          action as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: bodyColor,
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+          if (isBad || isGood) ...[
+            const SizedBox(height: 16),
+            Divider(color: isDarkBg ? Colors.white10 : Colors.black12, height: 1),
+            const SizedBox(height: 16),
+          ],
+          if (isBad) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MapWebviewScreen(
+                        url: 'https://www.google.com/maps/search/?api=1&query=psikolog+dan+psikiater+terdekat',
+                        title: 'Peta Psikolog & Psikiater',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.map_rounded, color: Colors.white, size: 20),
+                label: const Text(
+                  'Cari Psikolog / Psikiater Terdekat (Peta Pakar)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
+                ),
+              ),
+            ),
+          ],
+          if (isGood) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const BreathingModal(),
+                        );
+                      },
+                      icon: const Icon(Icons.spa_rounded, color: Colors.white, size: 18),
+                      label: const Text(
+                        'Napas Lega',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const AmbientMusicSheet(),
+                        );
+                      },
+                      icon: const Icon(Icons.music_note_rounded, color: Colors.white, size: 18),
+                      label: const Text(
+                        'Melodi Damai',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEC4899),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildHistoryTab() {
     final diagnosticProvider = Provider.of<DiagnosticProvider>(context);
     final historyList = diagnosticProvider.historyList;
@@ -566,171 +822,172 @@ class _MonitoringScreenState extends State<MonitoringScreen> with SingleTickerPr
       );
     }
 
-    return ListView.builder(
+    return ListView(
       padding: const EdgeInsets.all(20.0),
-      itemCount: historyList.length,
-      itemBuilder: (context, index) {
-        final history = historyList[index];
-        final isNormal = history.diagnosisCode == 'P000';
-        
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDarkBg ? Colors.white10 : Colors.transparent,
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.01), 
-                blurRadius: 10, 
-                offset: const Offset(0, 4),
-              )
-            ],
-          ),
-          child: Theme(
-            data: Theme.of(context).copyWith(
-              dividerColor: Colors.transparent,
-            ),
-            child: ExpansionTile(
-              iconColor: isDarkBg ? Colors.white70 : Colors.grey,
-              collapsedIconColor: isDarkBg ? Colors.white70 : Colors.grey,
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isNormal 
-                      ? Colors.green.withOpacity(isDarkBg ? 0.18 : 0.1) 
-                      : Colors.red.withOpacity(isDarkBg ? 0.18 : 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isNormal ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
-                  color: isNormal ? Colors.green : Colors.redAccent,
-                ),
+      children: [
+        _buildTrendAnalysisCard(context, diagnosticProvider, isDarkBg),
+        ...historyList.map((history) {
+          final isNormal = history.diagnosisCode == 'P000';
+          
+          return Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: isDarkBg ? const Color(0xFF1E1E38) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDarkBg ? Colors.white10 : Colors.transparent,
+                width: 1.0,
               ),
-              title: Text(
-                history.hasilDiagnosis,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: isNormal 
-                      ? (isDarkBg ? Colors.green[200] : Colors.green[800]) 
-                      : (isDarkBg ? Colors.red[200] : Colors.red[800]),
-                ),
-              ),
-              subtitle: Text(
-                DateFormat('dd MMM yyyy, HH:mm').format(history.tanggal),
-                style: TextStyle(
-                  fontSize: 11, 
-                  color: isDarkBg ? Colors.white54 : Colors.grey,
-                ),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Divider(height: 1, color: isDarkBg ? Colors.white10 : Colors.black12),
-                      const SizedBox(height: 12),
-                      
-                      // Gejala terpilih
-                      Text(
-                        'Gejala yang Anda laporkan:',
-                        style: TextStyle(
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold, 
-                          color: isDarkBg ? Colors.white54 : Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: history.gejalaDipilih.map((code) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(isDarkBg ? 0.18 : 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              code,
-                              style: TextStyle(
-                                fontSize: 10, 
-                                fontWeight: FontWeight.bold, 
-                                color: isDarkBg ? Colors.white : const Color(0xFF6C63FF),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 16),
-  
-                      // Deskripsi
-                      Text(
-                        'Deskripsi Gangguan:',
-                        style: TextStyle(
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold, 
-                          color: isDarkBg ? Colors.white54 : Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        history.deskripsi,
-                        style: TextStyle(
-                          fontSize: 13, 
-                          color: isDarkBg ? Colors.white70 : const Color(0xFF505050), 
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-  
-                      // Solusi
-                      Text(
-                        'Rekomendasi Pakar:',
-                        style: TextStyle(
-                          fontSize: 12, 
-                          fontWeight: FontWeight.bold, 
-                          color: isDarkBg ? Colors.white54 : Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Column(
-                        children: history.solusi.map((sol) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(Icons.arrow_right_rounded, color: Color(0xFF6C63FF), size: 18),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    sol,
-                                    style: TextStyle(
-                                      fontSize: 12, 
-                                      color: isDarkBg ? Colors.white70 : const Color(0xFF3F3D56), 
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDarkBg ? 0.15 : 0.01), 
+                  blurRadius: 10, 
+                  offset: const Offset(0, 4),
+                )
               ],
             ),
-          ),
-        );
-      },
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+              ),
+              child: ExpansionTile(
+                iconColor: isDarkBg ? Colors.white70 : Colors.grey,
+                collapsedIconColor: isDarkBg ? Colors.white70 : Colors.grey,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isNormal 
+                        ? Colors.green.withOpacity(isDarkBg ? 0.18 : 0.1) 
+                        : Colors.red.withOpacity(isDarkBg ? 0.18 : 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isNormal ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
+                    color: isNormal ? Colors.green : Colors.redAccent,
+                  ),
+                ),
+                title: Text(
+                  history.hasilDiagnosis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: isNormal 
+                        ? (isDarkBg ? Colors.green[200] : Colors.green[800]) 
+                        : (isDarkBg ? Colors.red[200] : Colors.red[800]),
+                  ),
+                ),
+                subtitle: Text(
+                  DateFormat('dd MMM yyyy, HH:mm').format(history.tanggal),
+                  style: TextStyle(
+                    fontSize: 11, 
+                    color: isDarkBg ? Colors.white54 : Colors.grey,
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Divider(height: 1, color: isDarkBg ? Colors.white10 : Colors.black12),
+                        const SizedBox(height: 12),
+                        
+                        // Gejala terpilih
+                        Text(
+                          'Gejala yang Anda laporkan:',
+                          style: TextStyle(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold, 
+                            color: isDarkBg ? Colors.white54 : Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: history.gejalaDipilih.map((code) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF6C63FF).withOpacity(isDarkBg ? 0.18 : 0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                code,
+                                style: TextStyle(
+                                  fontSize: 10, 
+                                  fontWeight: FontWeight.bold, 
+                                  color: isDarkBg ? Colors.white : const Color(0xFF6C63FF),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+    
+                        // Deskripsi
+                        Text(
+                          'Deskripsi Gangguan:',
+                          style: TextStyle(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold, 
+                            color: isDarkBg ? Colors.white54 : Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          history.deskripsi,
+                          style: TextStyle(
+                            fontSize: 13, 
+                            color: isDarkBg ? Colors.white70 : const Color(0xFF505050), 
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+    
+                        // Solusi
+                        Text(
+                          'Rekomendasi Pakar:',
+                          style: TextStyle(
+                            fontSize: 12, 
+                            fontWeight: FontWeight.bold, 
+                            color: isDarkBg ? Colors.white54 : Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Column(
+                          children: history.solusi.map((sol) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.arrow_right_rounded, color: Color(0xFF6C63FF), size: 18),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      sol,
+                                      style: TextStyle(
+                                        fontSize: 12, 
+                                        color: isDarkBg ? Colors.white70 : const Color(0xFF3F3D56), 
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ],
     );
   }
 

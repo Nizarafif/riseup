@@ -822,6 +822,31 @@ class FirestoreService {
     }
   }
 
+  Future<void> addHistoryBatch(List<HistoryModel> histories) async {
+    if (_useMock) {
+      for (final history in histories) {
+        _mockHistory.add(HistoryModel(
+          id: 'mock-h-${DateTime.now().millisecondsSinceEpoch}-${history.tanggal.millisecondsSinceEpoch}',
+          userId: history.userId,
+          tanggal: history.tanggal,
+          gejalaDipilih: history.gejalaDipilih,
+          hasilDiagnosis: history.hasilDiagnosis,
+          diagnosisCode: history.diagnosisCode,
+          deskripsi: history.deskripsi,
+          solusi: history.solusi,
+        ));
+      }
+      _updateMockHistoryStream();
+    } else {
+      final batch = _db!.batch();
+      for (final history in histories) {
+        final docRef = _db!.collection('riwayat_tes').doc();
+        batch.set(docRef, history.toMap());
+      }
+      await batch.commit();
+    }
+  }
+
   // --- Mood Tracker CRUD ---
   Future<List<MoodModel>> getMoods(String userId) async {
     if (_useMock) {

@@ -12,12 +12,14 @@ class AmbientTrack {
   final String title;
   final String source;
   final bool isLocal;
+  final bool isAsset;
   final String icon;
 
   AmbientTrack({
     required this.title,
     required this.source,
     required this.isLocal,
+    this.isAsset = false,
     required this.icon,
   });
 
@@ -25,6 +27,7 @@ class AmbientTrack {
     'title': title,
     'source': source,
     'isLocal': isLocal,
+    'isAsset': isAsset,
     'icon': icon,
   };
 
@@ -32,6 +35,7 @@ class AmbientTrack {
     title: map['title'] ?? '',
     source: map['source'] ?? '',
     isLocal: map['isLocal'] ?? false,
+    isAsset: map['isAsset'] ?? false,
     icon: map['icon'] ?? '🎵',
   );
 }
@@ -48,30 +52,34 @@ class _AmbientMusicSheetState extends State<AmbientMusicSheet>
   late AudioPlayer _audioPlayer;
   late AnimationController _rotationController;
 
-  // Trek bawaan (instrumental SoundHelix)
+  // Trek bawaan (instrumental lokal dari asset bundle)
   final List<AmbientTrack> _presetTracks = [
     AmbientTrack(
       title: 'Piano Meditasi',
-      source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      source: 'Audio/Piano Meditasi.mp3',
       isLocal: false,
+      isAsset: true,
       icon: '🧘',
     ),
     AmbientTrack(
       title: 'Melodi Hujan',
-      source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      source: 'Audio/Melodi Hujan.mp3',
       isLocal: false,
+      isAsset: true,
       icon: '🌧️',
     ),
     AmbientTrack(
       title: 'Hutan Damai',
-      source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      source: 'Audio/Hutan Damai.mp3',
       isLocal: false,
+      isAsset: true,
       icon: '🌲',
     ),
     AmbientTrack(
       title: 'Ombak Pantai',
-      source: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+      source: 'Audio/Ombak Pantai.mp3',
       isLocal: false,
+      isAsset: true,
       icon: '🌊',
     ),
   ];
@@ -183,7 +191,9 @@ class _AmbientMusicSheetState extends State<AmbientMusicSheet>
       await _audioPlayer.stop();
       final track = _allTracks[index];
 
-      if (track.isLocal) {
+      if (track.isAsset) {
+        await _audioPlayer.play(AssetSource(track.source));
+      } else if (track.isLocal) {
         await _audioPlayer.play(DeviceFileSource(track.source));
       } else {
         await _audioPlayer.play(UrlSource(track.source));

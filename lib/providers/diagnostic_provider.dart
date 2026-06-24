@@ -374,6 +374,146 @@ class DiagnosticProvider extends ChangeNotifier {
     }
   }
 
+  // --- Add History Batch ---
+  Future<bool> addHistoryBatch(String userId, List<HistoryModel> histories) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _dbService.addHistoryBatch(histories);
+      await fetchHistory(userId);
+      
+      if (_usersSubscription == null) {
+        _allHistories = await _dbService.getAllHistory();
+      }
+      return true;
+    } catch (e) {
+      debugPrint("Gagal menyimpan batch riwayat: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // --- Evaluate 30 Day Screening Trend ---
+  Map<String, dynamic> evaluate30DayScreeningTrend() {
+    if (_historyList.isEmpty) {
+      return {
+        'status': 'no_data',
+        'title': 'Belum Ada Data',
+        'message': 'Belum ada data skrining yang cukup untuk dianalisis.',
+        'color': Colors.grey,
+        'icon': Icons.info_outline,
+        'pattern': '-',
+        'actions': <String>[],
+      };
+    }
+    
+    // Sort by date ascending (oldest first)
+    final sortedHistory = List<HistoryModel>.from(_historyList)
+      ..sort((a, b) => a.tanggal.compareTo(b.tanggal));
+
+    if (sortedHistory.length < 3) {
+      return {
+        'status': 'insufficient_data',
+        'title': 'Data Belum Cukup',
+        'message': 'Lakukan setidaknya 3 kali tes skrining untuk melihat analisis tren kondisi kesehatan mental Anda.',
+        'color': Colors.amber,
+        'icon': Icons.pending_actions_rounded,
+        'pattern': '-',
+        'actions': <String>[],
+      };
+    }
+
+    // Map diagnosis code to severity level
+    int getSeverity(String code) {
+      switch (code) {
+        case 'P000': return 0;
+        case 'P001': return 1;
+        case 'P002': return 2;
+        case 'P003': return 3;
+        case 'P004': return 4;
+        default: return 0;
+      }
+    }
+
+    String getSeverityLabel(double avg) {
+      if (avg < 0.8) return 'Normal';
+      if (avg < 1.8) return 'Ringan';
+      if (avg < 2.8) return 'Sedang';
+      if (avg < 3.8) return 'Berat';
+      return 'Depresi';
+    }
+
+    // Split into first half (older) and second half (newer)
+    final mid = sortedHistory.length ~/ 2;
+    final firstHalf = sortedHistory.sublist(0, mid);
+    final secondHalf = sortedHistory.sublist(mid);
+
+    double avgFirst = firstHalf.map((h) => getSeverity(h.diagnosisCode)).reduce((a, b) => a + b) / firstHalf.length;
+    double avgSecond = secondHalf.map((h) => getSeverity(h.diagnosisCode)).reduce((a, b) => a + b) / secondHalf.length;
+
+    final patternStr = '${getSeverityLabel(avgFirst)} ➔ ${getSeverityLabel(avgSecond)}';
+
+    if (avgFirst < 0.8 && avgSecond < 0.8) {
+      return {
+        'status': 'stable_normal',
+        'title': 'Kondisi Stabil & Prima',
+        'pattern': patternStr,
+        'message': 'Kesehatan mental Anda stabil dalam kondisi sangat baik selama 30 hari terakhir. Pertahankan pola ini!',
+        'color': Colors.green,
+        'icon': Icons.sentiment_very_satisfied_rounded,
+        'actions': <String>[
+          'Pertahankan pola tidur yang teratur (7-8 jam per malam).',
+          'Lakukan meditasi atau olahraga ringan secara rutin di pagi hari.',
+          'Tetap aktif mencatat mood harian Anda untuk menjaga kesadaran emosional.'
+        ],
+      };
+    } else if (avgSecond < avgFirst) {
+      return {
+        'status': 'improving',
+        'title': 'Kondisi Mulai Membaik',
+        'pattern': patternStr,
+        'message': 'Kabar baik! Tren menunjukkan kondisi mental Anda mulai membaik dari sebelumnya secara bertahap. Pertahankan perkembangan positif ini!',
+        'color': Colors.green,
+        'icon': Icons.trending_down_rounded,
+        'actions': <String>[
+          'Lanjutkan latihan relaksasi pernapasan (Box Breathing) saat merasa lelah.',
+          'Pertahankan kebiasaan menulis jurnal mood harian Anda.',
+          'Berikan apresiasi pada diri Anda atas kemajuan kecil yang telah dicapai.'
+        ],
+      };
+    } else if (avgSecond > avgFirst && avgSecond >= 2.0) {
+      return {
+        'status': 'worsening',
+        'title': 'Kondisi Menunjukkan Penurunan',
+        'pattern': patternStr,
+        'message': 'Perhatian: Hasil tes menunjukkan kondisi mental Anda mengalami penurunan yang cukup signifikan akhir-akhir ini.',
+        'color': Colors.redAccent,
+        'icon': Icons.trending_up_rounded,
+        'actions': <String>[
+          'Segera kurangi beban aktivitas harian Anda untuk beristirahat secara fisik dan mental.',
+          'Lakukan latihan relaksasi pernapasan 3 kali sehari (pagi, siang, malam).',
+          'Sangat disarankan berkonsultasi dengan Psikolog Profesional di Panel Pakar RiseUp.'
+        ],
+      };
+    } else {
+      return {
+        'status': 'stable_bad',
+        'title': 'Kondisi Mengalami Tekanan Konstan',
+        'pattern': patternStr,
+        'message': 'Kondisi mental Anda terpantau berada dalam tekanan konstan dan belum menunjukkan tanda pemulihan dalam sebulan ini.',
+        'color': Colors.redAccent,
+        'icon': Icons.warning_amber_rounded,
+        'actions': <String>[
+          'Segera jadwalkan sesi konsultasi klinis dengan Psikolog Profesional.',
+          'Ceritakan beban pikiran Anda kepada keluarga atau kerabat dekat yang Anda percayai.',
+          'Gunakan layanan hotline darurat kesehatan jika Anda mulai merasa sangat kewalahan.'
+        ],
+      };
+    }
+  }
+
   @override
   void dispose() {
     cancelAdminListeners();
