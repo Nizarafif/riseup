@@ -14,11 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "624940810803-kpprqrkr0se1hjdpn5236t5677j58rgn.apps.googleusercontent.com",
+          "client_id": "624940810803-oursregeort60lpodhqpcvjja1akp2vr.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.nizar.riseup",
-            "certificate_hash": "b9141e5fda8555919948093cbb7805e500b2bc66"
+            "certificate_hash": "892c3aa307652e80ac4c72b2aa91d9a277f9f1e3"
+          }
+        },
+        {
+          "client_id": "624940810803-spps6mm4k4gendkt0o8ou6qhi4pcs2cv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nizar.riseup",
+            "certificate_hash": "ef1a9152864113815d20073baf906b8317f19208"
           }
         },
         {
